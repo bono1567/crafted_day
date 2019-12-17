@@ -70,13 +70,10 @@ class FTArrangement:
         return [all_summary, all_title]
 
 
-
-
 """if __name__ == "__main__":
-    A = FTArrangement('Bombay Stock Exchange')
+    A = FTArrangement('HDFC')
     B = A.getSummaryDateAPI()
-    print(B.head())
 
-    C = A.getSummaryForW2V(False)
-    for c in C:
-        print(C)"""
+    A, C = A.getSummaryForW2V(True)
+    for a, c in zip(A, C):
+        print(a, "||||| ", c)"""

@@ -7,7 +7,7 @@ This data will mainly be used for constructing prediction model and data-visuali
 This deals with the data extraction and manupulation from the APIs.
 We are mainly using **Pandas** and **NumPy** to do so.
 
-## Visualtion
+## Visualization Sector
 This module deals with th visualisation of the data using **Bokeh**
 
 ## Predictor

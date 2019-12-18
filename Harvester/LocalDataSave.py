@@ -1,6 +1,6 @@
 from Harvester.StockPriceHarvester.DataArrangement import ArrangedData
 
-stocks_to_analyse = ['ETR:VOW3', 'NSE:TATAMOTORS']
+stocks_to_analyse = ['ETR:VOW3', 'NSE:BRITANNIA', 'NSE:TATAMOTORS']
 
 A = ArrangedData("D")
 data = A.fetch(stocks_to_analyse, 1461)

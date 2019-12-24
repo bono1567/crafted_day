@@ -56,8 +56,8 @@ class ArrangedData:
         return stocks_data
 
 
-if __name__ == '__main__':
+"""if __name__ == '__main__':
     A = ArrangedData('D')
     B = A.fetch(["NSE:TATAMOTORS"], 100)
     # print(B.size)
-    print(B[0].head())
+    print(B[0].head())"""

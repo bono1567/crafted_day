@@ -31,8 +31,9 @@ class FTArrangeWithWords:
     def fetchDataAll(self):
         return self.__total_data
 
-if __name__ == '__main__':
-    A = FTArrangeWithWords(['Modi', 'Jamie Dimon', 'India', 'TATA'])
-    D = A.getSummary(False)
 
-    print(D.head())
+"""if __name__ == '__main__':
+    A = FTArrangeWithWords(['Modi', 'Jamie Dimon', 'India', 'TATA'])
+    D = A.getSummary(True)
+
+    print(D.head())"""

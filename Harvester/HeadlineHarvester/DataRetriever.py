@@ -23,6 +23,7 @@ class FinancialTimes:
                              '","resultContext" : {"aspects" :[ "summary","lifecycle"]}}'
 
     def responseJSON(self):
+
         return requests.request("POST", self.__url, data=self.__payload, headers=self.__headers,
                                 params=self.__qstr).json()
 

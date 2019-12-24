@@ -1,5 +1,5 @@
 import pandas as pd
-import numpy as np
+
 from Harvester.HeadlineHarvester.DataArrangement import FTArrangeWithWords
 from Harvester.StockPriceHarvester.DataArrangement import ArrangedData
 
@@ -32,7 +32,7 @@ class DataWeaver:
         return pd.merge(self.model_headlines.getSummary(title), self.__weave__(), on='time')
 
 
-"""if __name__=='__main__':
+""" if __name__=='__main__':
     A = DataWeaver(['India', 'Modi', 'Cars'], 'NSE:TATAMOTORS')
     data = A.fetch(False)
 

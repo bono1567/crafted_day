@@ -1,19 +1,18 @@
-from Harvester.StockPriceHarvester.DataArrangement import ArrangedData
-from Harvester.HeadlineHarvester.Weaver import DataWeaver
-stocks_to_analyse = ['ETR:VOW3', 'NSE:BRITANNIA', 'NSE:TATAMOTORS']
-headline_words = [['volkswagen', 'cars', 'petrol', 'diesel', 'transport', 'vehicles', 'german', 'economy'],
-                  ['britannia', 'food', 'India', 'elections', 'Bombay', 'stocks'],
-                  ['vehicles', 'Tata', 'America', 'petrol', 'diesel', 'India']]
+import pandas as pd
+from Harvester.StockPriceHarvester.NSEToolsHarvester import FetchData
 
-A = ArrangedData("D")
+"""TODO: Introduce the AlphaVantage Code as well. """
 
-data = A.fetch(stocks_to_analyse, 1461)
-print(data[0].head())
-for name, x, words_set in zip(stocks_to_analyse, data, headline_words):
-    x.to_csv('./resources/' + name + '.csv')
-    B = DataWeaver(words_set, name)
-    data = B.fetch(True)
-    data.to_csv('./resources/' + name + '_NEWS' + '.csv')
+def nse_listing():
+    listing = pd.read_csv('./resources/NSE_Listing_2020.csv', header=0)
+    listing['SYMBOL'] = listing['SYMBOL']
+    return listing['SYMBOL'].tolist()
+
+
+if __name__ == '__main__':
+    model = FetchData.FetchNSEData(25)
+    model.save_daily_data()
+
 
 
 

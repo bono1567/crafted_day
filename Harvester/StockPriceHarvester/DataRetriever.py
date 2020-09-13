@@ -9,6 +9,7 @@ This is the data harvester class from the AlphaVantage APIs
 key: API key
 uri: API call URI
 key_map: Stock timeframe
+TODO: Make the print to logger change
 """
 
 

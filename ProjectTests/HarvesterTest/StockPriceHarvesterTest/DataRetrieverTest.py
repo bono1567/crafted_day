@@ -3,6 +3,7 @@ import pandas as pd
 
 from Harvester.StockPriceHarvester.DataRetriever import AlphaVantageStocks
 
+
 class AlphaVantageTest(unittest.TestCase):
     def setUp(self):
         self.test_class = AlphaVantageStocks("NSE:TATAMOTORS")
@@ -31,6 +32,7 @@ class AlphaVantageTest(unittest.TestCase):
               "&apikey=UA3OCB0CIG6WMCJ0&datatype=csv"
         self.assertTrue(pd.testing.assert_frame_equal(self.test_class.fetch("D",10),
                                                         pd.read_csv(URL, nrows=10)) is None)
+
 
 if __name__ == '__main__':
     unittest.main()

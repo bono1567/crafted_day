@@ -1,8 +1,12 @@
 import requests
 import pandas as pd
+from LoggerApi.Logger import Logger
+
+"""TODO: Multiple logger issue still pertains but the dat is not getting duplicated or APIs are not being called 
+twice. """
 
 
-class FinancialTimes:
+class FinancialTimes(Logger):
     __url = "http://api.ft.com/content/search/v1"
     __qstr = {"apiKey": "59cbaf20e3e06d3565778e7b14cce0b217a844419dcc5bb1cc3ad4e9"}
     __payload = '{"queryString": "{}","resultContext" : {"aspects" :[ "summary","lifecycle"{}]}}'
@@ -14,6 +18,7 @@ class FinancialTimes:
     }
 
     def __init__(self, query, title=False):
+        super().__init__(FinancialTimes.__name__)
         self.__title = title
         if title:
             self.__payload = '{"queryString": "' + query + \
@@ -21,49 +26,55 @@ class FinancialTimes:
         else:
             self.__payload = '{"queryString": "' + query + \
                              '","resultContext" : {"aspects" :[ "summary","lifecycle"]}}'
+        self.add('INFO', "Final FT news data for keyword: {}".format(query))
 
-    def responseJSON(self):
+    def response_json(self):
 
         return requests.request("POST", self.__url, data=self.__payload, headers=self.__headers,
                                 params=self.__qstr).json()
 
-    def getResult(self):
-        return self.responseJSON()['results'][0]['results']
+    def get_result(self):
+        return self.response_json()['results'][0]['results']
 
-    def getFinalComponents(self):
-        results = self.getResult()
+    def get_final_components(self):
+        results = self.get_result()
         final_result = []
         for result in results:
-            components_dict = {'aspectSet': result['aspectSet'], 'apiUrl': result['apiUrl'],
-                               'publishDate': result['lifecycle']['lastPublishDateTime'][:10],
-                               'summary': result['summary']['excerpt']}
-            if self.__title:
-                components_dict['title'] = result['title']['title']
-            final_result.append(components_dict)
-
+            try:
+                components_dict = {'aspectSet': result['aspectSet'], 'apiUrl': result['apiUrl'],
+                                   'publishDate': result['lifecycle']['lastPublishDateTime'][:10],
+                                   'summary': result['summary']['excerpt']}
+                if self.__title:
+                    components_dict['title'] = result['title']['title']
+                final_result.append(components_dict)
+            except KeyError as e:
+                self.add('ERROR', "Key Missing in result. {}".format(e))
+        self.add('INFO', "Final FT get_final_components.")
         return final_result
 
 
-class FTArrangement:
-
+class FTArrangement(FinancialTimes):
     def __init__(self, comp_name="stocks"):
-        self.__Financial_Times = FinancialTimes(comp_name, True)
-        self.__data = self.__Financial_Times.getFinalComponents()
+        super().__init__(FTArrangement.__name__)
+        super().__init__(comp_name, True)
+        self.__data = self.get_final_components()
 
-    def getSummaryDateAPI(self, title=False):
+    def get_summary_date_api(self, title=False):
+        self.add('INFO', "SUMMARY/DATE/API called. With title as {}.".format(title))
         data = pd.DataFrame(data=self.__data, columns=['aspectSet', 'apiUrl', 'publishDate', 'summary', 'title'])
         if title is False:
             return data.drop(['aspectSet', 'title'], axis=1)
         return data.drop('aspectSet', axis=1)
 
-    def getSummaryForW2V(self, title=False):
+    def get_summary_for_w2v(self, title=False):
         all_summary = []
         all_title = []
+        self.add('INFO', "SUMMARY/DATE/API/W2V called. With title as {}.".format(title))
         for data_point in self.__data:
-            sentence = data_point['summary'].split()
+            sentence = data_point['summary']
             all_summary.append(sentence)
             if title is True:
-                sentence = data_point['title'].split()
+                sentence = data_point['title']
                 all_title.append(sentence)
         if title is False:
             del all_title
@@ -71,10 +82,9 @@ class FTArrangement:
         return [all_summary, all_title]
 
 
-"""if __name__ == "__main__":
-    A = FTArrangement('HDFC')
-    B = A.getSummaryDateAPI()
-
-    A, C = A.getSummaryForW2V(True)
-    for a, c in zip(A, C):
-        print(a, "||||| ", c)"""
+# if __name__ == "__main__":
+#         A = FTArrangement('John')
+#         data = A.get_summary_date_api(True)
+#
+#         C = FTArrangement('Morgan')
+#         C.get_summary_date_api()

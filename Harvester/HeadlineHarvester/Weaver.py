@@ -3,7 +3,8 @@ import pandas as pd
 from Harvester.HeadlineHarvester.DataArrangement import FTArrangeWithWords
 from Harvester.StockPriceHarvester.DataRetriever import AlphaVantageStocks
 
-"""DataWeaver will return the headline with the date and trend with the respective headline"""
+"""DataWeaver will return the headline with the date and trend with the respective headline. 
+Only applicable for AlphaVantage interface."""
 
 
 class DataWeaver:
@@ -43,11 +44,11 @@ class DataWeaver:
         return data
 
     def fetch(self, title=False):
-        return pd.merge(self.model_headlines.getSummary(title), self.__weave__(), on='time')
+        return pd.merge(self.model_headlines.get_summary(title), self.__weave__(), on='time')
 
 
-"""if __name__ == '__main__':
-    A = DataWeaver(['India', 'Modi', 'Cars'], 'NSE:TATAMOTORS')
+if __name__ == '__main__':
+    A = DataWeaver(['India', 'Modi', 'Data'], 'RELIANCE.BSE')
     data = A.fetch(True)
 
-    print(np.unique(data['trend']))"""
+    print(np.unique(data['trend']))

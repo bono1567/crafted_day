@@ -1,11 +1,15 @@
 import logging
+import datetime
+import os
 
 
 class Logger:
     def __init__(self, filename):
         # create logger
+        PATH_NAME = os.path.abspath(os.path.join(__file__, "../../")) + \
+                    '\\LOGS_{}'.format(datetime.datetime.now().strftime('%d%m%Y'))
+        logging.basicConfig(filename=PATH_NAME, level=logging.DEBUG)
         logger = logging.getLogger(filename)
-        logger.setLevel(logging.DEBUG)
 
         # create console handler and set level to debug
         ch = logging.StreamHandler()

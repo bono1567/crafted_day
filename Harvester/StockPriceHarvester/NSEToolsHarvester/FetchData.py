@@ -1,9 +1,11 @@
-from nsetools import Nse
-from LoggerApi.Logger import Logger
-import pandas as pd
-from pandas.errors import EmptyDataError
 import os
 from datetime import datetime
+
+import pandas as pd
+from nsetools import Nse
+from pandas.errors import EmptyDataError
+from json.decoder import JSONDecodeError
+from LoggerApi.Logger import Logger
 
 
 def reset_dict(get_column_names):
@@ -43,6 +45,8 @@ class FetchNSEData(Logger):
                 self.add('INFO', "Symbol ingested: {} ".format(symbol))
             except IndexError:
                 self.add('ERROR', "For symbol:{} the data doesn't exist.".format(symbol))
+            except JSONDecodeError:
+                self.add('ERROR', "JSON parser issue for {}".format(symbol))
         self.__save_to_csv(data_dict)
 
     def __if_exists(self, all_symbols):
@@ -55,6 +59,7 @@ class FetchNSEData(Logger):
             return all_symbols
         except (EmptyDataError, FileNotFoundError):  # Check if the file exists or is empty
             self.add('INFO', 'NO PRE-EXISTING RECORD.')
+        except JSONDecodeError:
             return all_symbols
 
     def __save_to_csv(self, data_dict):
@@ -63,9 +68,8 @@ class FetchNSEData(Logger):
         try:
             existing_df = pd.read_csv(FILE_PATH)
         except (EmptyDataError, FileNotFoundError):  # Check if the file exists or is empty
-            existing_df = pd.DataFrame(columns=[data_dict.keys()])
+            existing_df = pd.DataFrame(columns=[list(data_dict.keys())])
         data_frame = pd.DataFrame()
-        already_present = existing_df['symbol']
 
         for column in data_dict.keys():  # Add the values from dict
             data_frame[column] = data_dict[column]
@@ -78,5 +82,3 @@ class FetchNSEData(Logger):
         existing_df.to_csv(FILE_PATH, index=False)
         self.add('INFO', 'SAVED TO CSV. SIZE:{}'.format(existing_df.shape))
         del existing_df, data_frame
-
-

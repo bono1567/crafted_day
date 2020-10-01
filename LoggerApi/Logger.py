@@ -4,10 +4,10 @@ import os
 
 
 class Logger:
-    def __init__(self, filename):
+    def __init__(self, filename, log_name="LOGS"):
         # create logger
         PATH_NAME = os.path.abspath(os.path.join(__file__, "../../")) + \
-                    '\\LOGS_{}'.format(datetime.datetime.now().strftime('%d%m%Y'))
+                    "\\{}_{}".format(log_name, datetime.datetime.now().strftime('%d%m%Y'))
         logging.basicConfig(filename=PATH_NAME, level=logging.DEBUG)
         logger = logging.getLogger(filename)
 

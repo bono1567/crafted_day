@@ -22,14 +22,16 @@ class FetchNSEData(Logger):
         super().__init__(FetchNSEData.__name__)
         self.add("INFO", self.__model)
 
-    def save_daily_data(self, symbols=None):
+    def save_daily_data(self, symbols=None, save=True):
         if symbols is None:
             all_symbols = self.__model.get_stock_codes()
             all_symbols = list(all_symbols.keys())[1:]
         else:
-            all_symbols = symbols
+            all_symbols = [symbol for symbol in symbols if self.__model.is_valid_code(symbol)]
+            if len(all_symbols) is 0:
+                raise EmptyDataError("NO SYMBOLS TO PROCESS")
         self.add('INFO', "Total number of stocks: {}".format(len(all_symbols)))
-        get_column_names = self.__model.get_quote(all_symbols[1]).keys()
+        get_column_names = self.__model.get_quote(all_symbols[0]).keys()
         self.add('INFO', "All the features: {}".format(get_column_names))
 
         data_dict = reset_dict(get_column_names)
@@ -47,7 +49,10 @@ class FetchNSEData(Logger):
                 self.add('ERROR', "For symbol:{} the data doesn't exist.".format(symbol))
             except JSONDecodeError:
                 self.add('ERROR', "JSON parser issue for {}".format(symbol))
-        self.__save_to_csv(data_dict)
+        if save:
+            self.__save_to_csv(data_dict)
+        else:
+            return data_dict
 
     def __if_exists(self, all_symbols):
         FILE_PATH = os.path.abspath(os.path.join(__file__, "../../..")) + "//resources//EQUITY_REC_" \
@@ -59,6 +64,7 @@ class FetchNSEData(Logger):
             return all_symbols
         except (EmptyDataError, FileNotFoundError):  # Check if the file exists or is empty
             self.add('INFO', 'NO PRE-EXISTING RECORD.')
+            return all_symbols
         except JSONDecodeError:
             return all_symbols
 

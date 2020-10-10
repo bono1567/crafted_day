@@ -1,8 +1,9 @@
+import Constants
 from Harvester.StockPriceHarvester.DataRetriever import AlphaVantageStocks, AlphaVantageTechnicalIndicators
 import pandas as pd
 import time
 
-features = ['SMA', 'EMA', 'VWAP', 'MACD', 'STOCH', 'RSI', 'ADX', 'CCI', 'AROON', 'BBANDS', 'AD', 'OBV']
+features = Constants.FEATURES
 
 """This gives us the data from AlphaVantage feature-wise"""
 
@@ -42,11 +43,11 @@ class ArrangedData:
                                                    series_type=series_type, interval=self.__interval,
                                                    nbdd=nbdd, nbdu=nbdu)
             stock_prices = pd.merge(stock_prices, current, on='time')
-            time.sleep(15)
+            time.sleep(10)
 
         return stock_prices
 
-    def fetch(self, symbols, sample_number, time_period=60, series_type="open", nbdu=2, nbdd=2):
+    def fetch_all(self, symbols, sample_number, time_period=60, series_type="open", nbdu=2, nbdd=2):
         """Return data of each stocks in a list of data-frames"""
         stocks_data = []
 
@@ -55,9 +56,12 @@ class ArrangedData:
 
         return stocks_data
 
+    def fetch(self, sym, sample_number, time_period=60, series_type="open", nbdu=2, nbdd=2):
+        return self.__fetch_helper(sym, sample_number, time_period, series_type, nbdu, nbdd)
 
-"""if __name__ == '__main__':
+
+if __name__ == '__main__':
     A = ArrangedData('D')
-    B = A.fetch(["NSE:TATAMOTORS"], 100)
+    B = A.fetch("506480.BSE", 365*3)
     # print(B.size)
-    print(B[0].head())"""
+    print(B.shape)

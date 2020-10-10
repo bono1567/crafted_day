@@ -1,44 +1,40 @@
-import glob
-import os
 import pandas as pd
+from elasticsearch import Elasticsearch
+
+import Constants
 from LoggerApi.Logger import Logger
-"""For the Models modules we will be using this to extract the data collected in the given time-frame. Work till ES 
-solution is made. """
+
+"""Get stock data from ES index to build a model."""
 
 
 class FetchAllData(Logger):
-    RESOURCE_PATH = os.path.dirname(os.path.dirname(os.path.dirname(__file__))) + "/resources/*WEEK*"
-    ALL_FILES = [x for x in glob.glob(RESOURCE_PATH) if "JSON" not in x]
 
     def __init__(self):
-        super().__init__(FetchAllData.__name__, 'WEEKLY_REPORT')
-        final_data = pd.read_csv(self.ALL_FILES[0])
-        self.add("INFO", "File processed: {}".format(self.ALL_FILES[0]))
-        first_indicator = True
-        for file in self.ALL_FILES:
-            if first_indicator:
-                first_indicator = False
-                continue
-            final_data = pd.concat([final_data, pd.read_csv(file)], axis=0)
-            self.add("INFO", "File processed: {}".format(file))
-        self.add("INFO", "All files fetched.")
-        self.all_data = final_data
-        del final_data
+        super().__init__(FetchAllData.__name__, "WEEKLY_REPORT")
+        self.es = Elasticsearch(Constants.ES_URL, port=Constants.ES_PORT, retry_on_timeout=True, sniff_on_start=True,
+                                sniff_on_connection_fail=True,
+                                sniffer_timeout=60)
 
-    def get_stock_data(self, stock_indicator):
-        stock_indicator = stock_indicator.upper()
-        data = self.all_data[self.all_data['symbol'] == stock_indicator]
-        if data.empty:
-            self.add("ERROR", "Not indicator named '{}' exists. ".format(stock_indicator))
-            return data
-        self.add("INFO", "Data for '{}' extracted.".format(stock_indicator))
-        return data
+    def fetch_stock_data(self, stock_indicator, in_pandas=True):
+        query = Constants.SEARCH_FOR_STOCK_DATA
+        query["query"]["bool"]["must"][0]["term"]["symbol.keyword"]["value"] = stock_indicator
+        if in_pandas:
+            return self.__get_in_data_frame(self.fetch_stock_data(stock_indicator, False))
 
+        else:
+            return self.es.search(index=Constants.COMPLETE_DATA_INDEX, body=query)
 
-A = FetchAllData()
-
-
-
+    def __get_in_data_frame(self, json_data):
+        self.add("INFO", "Total number of records: {}".format(json_data["hits"]["total"]["value"]))
+        conversion_data = {}
+        index = 0
+        for record in json_data["hits"]["hits"]:
+            conversion_data[str(index)] = record["_source"]
+            index += 1
+        final_data = pd.DataFrame.from_dict(conversion_data, orient='index')
+        final_data['processingDate'] = pd.to_datetime(final_data['processingDate'])
+        final_data.sort_values(by='processingDate', inplace=True)
+        return final_data
 
 
 

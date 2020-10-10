@@ -14,9 +14,9 @@ class DataWeaver:
         self.sym = [stock]
 
     @staticmethod
-    def __trend_generator(data):
+    def __trend_generator(generated_data):
         trend = []
-        for difference in data.close.diff():
+        for difference in generated_data.close.diff():
             if difference > 0:
                 trend.append('UP')
             elif difference < 0:
@@ -27,28 +27,26 @@ class DataWeaver:
         return trend
 
     def __get_the_data__(self):
-        data = self.model_stocks.fetch(365.25 * 4, 'D')
-        data['trend'] = self.__trend_generator(data)
-        return data
+        current_data = self.model_stocks.fetch(365.25 * 4, 'D')
+        current_data['trend'] = self.__trend_generator(current_data)
+        return current_data
 
     def __weave__(self):
-        data = pd.DataFrame()
+        current_data = pd.DataFrame()
         temp_data = self.__get_the_data__()
         if 'time' in temp_data.columns:
-            data['time'] = temp_data['time'].copy()
+            current_data['time'] = temp_data['time'].copy()
         else:
-            data['time'] = temp_data['timestamp'].copy()
+            current_data['time'] = temp_data['timestamp'].copy()
 
-        data['trend'] = temp_data['trend']
+        current_data['trend'] = temp_data['trend']
         del temp_data
-        return data
+        return current_data
 
     def fetch(self, title=False):
         return pd.merge(self.model_headlines.get_summary(title), self.__weave__(), on='time')
 
 
-if __name__ == '__main__':
-    A = DataWeaver(['India', 'Modi', 'Data'], 'RELIANCE.BSE')
-    data = A.fetch(True)
-
-    print(np.unique(data['trend']))
+"""if __name__ == '__main__':
+    A = DataWeaver(['India', 'Modi', 'Data'], '500325.BSE')
+    # data = A.fetch(True)"""

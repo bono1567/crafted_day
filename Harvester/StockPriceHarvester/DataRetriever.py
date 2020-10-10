@@ -1,7 +1,6 @@
-import time
-
+import Constants
+from LoggerApi.Logger import Logger
 import pandas as pd
-import numpy as np
 
 URL = "https://www.alphavantage.co/query?function={}&outputsize=full&symbol={}&apikey={}&datatype=csv"
 """
@@ -12,9 +11,11 @@ key_map: Stock timeframe
 TODO: Make the print to logger change
 """
 
+logger = Logger(__file__, "LOGGER_VANTAGE")
 
-class AlphaVantageStocks:
-    __key = "UA3OCB0CIG6WMCJ0"
+
+class AlphaVantageStocks():
+    __key = Constants.KEY
     __uri = URL
     __key_map = {
         "D": "TIME_SERIES_DAILY_ADJUSTED",
@@ -32,7 +33,7 @@ class AlphaVantageStocks:
             self.__uri = URL + "&interval=" + interval
             interval = 'ID'
 
-        print(self.__uri.format(self.__key_map[interval], self.__symbol, self.__key))
+        logger.add("INFO", "URL: {}".format(self.__uri.format(self.__key_map[interval], self.__symbol, self.__key)))
         return pd.read_csv(self.__uri.format(self.__key_map[interval], self.__symbol, self.__key), nrows=1)
 
     def fetch(self, size, interval):
@@ -41,7 +42,7 @@ class AlphaVantageStocks:
             self.__uri = URL + "&interval=" + interval
             interval = 'ID'
 
-        print(self.__uri.format(self.__key_map[interval], self.__symbol, self.__key))
+        logger.add("INFO", "URL: {}".format(self.__uri.format(self.__key_map[interval], self.__symbol, self.__key)))
         return pd.read_csv(self.__uri.format(self.__key_map[interval], self.__symbol, self.__key), nrows=size)
 
 
@@ -55,9 +56,9 @@ BB_URL = COM_URL + "function=BBANDS&symbol={}&interval={}&time_period={}&series_
 VWAP_AD_OBV_STOCH_URL = COM_URL + "function={}&symbol={}&interval={}&apikey={}&datatype=csv"
 
 
-class AlphaVantageTechnicalIndicators:
+class AlphaVantageTechnicalIndicators():
     __features = ['SMA', 'EMA', 'VWAP', 'MACD', 'STOCH', 'RSI', 'ADX', 'CCI', 'AROON', 'BBANDS', 'AD', 'OBV']
-    __key = "UA3OCB0CIG6WMCJ0"
+    __key = Constants.KEY
     __interval_map = {"D": "daily", "W": "weekly", "M": "monthly"}
 
     def __init__(self, symbol):
@@ -72,7 +73,8 @@ class AlphaVantageTechnicalIndicators:
             tp = self.__interval_map[interval]
 
         if function in ['SMA', 'EMA', 'RSI']:
-            print(SMA_EMA_RSI_URL.format(function, self.__symbol, tp, time_period, series_type, self.__key))
+            logger.add("INFO", "URL_SUB: {}".format(SMA_EMA_RSI_URL.format(function, self.__symbol, tp, time_period,
+                                                                         series_type, self.__key)))
             return pd.read_csv(
                 SMA_EMA_RSI_URL.format(function, self.__symbol, tp, time_period, series_type, self.__key),
                 nrows=sample_number)
@@ -81,19 +83,19 @@ class AlphaVantageTechnicalIndicators:
             if function is 'VWAP':
                 if tp in ['daily', 'weekly', 'monthly']:
                     raise Exception("Give interval in minutes")
-            print(VWAP_AD_OBV_STOCH_URL.format(function, self.__symbol, tp, self.__key))
+            logger.add("INFO", "URL_SUB: {}".format(VWAP_AD_OBV_STOCH_URL.format(function, self.__symbol, tp, self.__key)))
             return pd.read_csv(
                 VWAP_AD_OBV_STOCH_URL.format(function, self.__symbol, tp, self.__key),
                 nrows=sample_number)
 
         if function in ['ADX', 'CCI', 'AROON']:
-            print(ADX_CCI_AROON_URL.format(function, self.__symbol, tp, time_period, self.__key))
+            logger.add("INFO", "URL_SUB: {}".format(ADX_CCI_AROON_URL.format(function, self.__symbol, tp, time_period, self.__key)))
             return pd.read_csv(
                 ADX_CCI_AROON_URL.format(function, self.__symbol, tp, time_period, self.__key),
                 nrows=sample_number)
 
         if function is 'MACD':
-            print(MACD_URL.format(self.__symbol, tp, series_type, self.__key))
+            logger.add("INFO", "URL_SUB: {}".format(MACD_URL.format(self.__symbol, tp, series_type, self.__key)))
             return pd.read_csv(
                 MACD_URL.format(self.__symbol, tp, series_type, self.__key),
                 nrows=sample_number)
@@ -101,7 +103,8 @@ class AlphaVantageTechnicalIndicators:
         if function is 'BBANDS':
             nbdu = str(nbdu)
             nbdd = str(nbdd)
-            print(BB_URL.format(self.__symbol, tp, time_period, series_type, nbdu, nbdd, self.__key))
+            logger.add("INFO", "URL_SUB: {}".format(BB_URL.format(self.__symbol, tp, time_period, series_type, nbdu, nbdd,
+                                                                self.__key)))
             return pd.read_csv(
                 BB_URL.format(self.__symbol, tp, time_period, series_type, nbdu, nbdd, self.__key),
                 nrows=sample_number)
@@ -117,6 +120,6 @@ class AlphaVantageTechnicalIndicators:
         if function is 'STOCH' or function is 'BBANDS':
             time.sleep(60.0)
 
-    print(B.fetch(10, 15).head())
+    logger.add("INFO", "URL_SUB: {}".format(B.fetch(10, 15).head()))
     for ans in answers:
-        print(ans.head())"""
+        logger.add("INFO", "URL_SUB: {}".format(ans.head()))"""

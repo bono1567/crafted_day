@@ -56,7 +56,7 @@ BB_URL = COM_URL + "function=BBANDS&symbol={}&interval={}&time_period={}&series_
 VWAP_AD_OBV_STOCH_URL = COM_URL + "function={}&symbol={}&interval={}&apikey={}&datatype=csv"
 
 
-class AlphaVantageTechnicalIndicators():
+class AlphaVantageTechnicalIndicators:
     __features = ['SMA', 'EMA', 'VWAP', 'MACD', 'STOCH', 'RSI', 'ADX', 'CCI', 'AROON', 'BBANDS', 'AD', 'OBV']
     __key = Constants.KEY
     __interval_map = {"D": "daily", "W": "weekly", "M": "monthly"}
@@ -74,7 +74,7 @@ class AlphaVantageTechnicalIndicators():
 
         if function in ['SMA', 'EMA', 'RSI']:
             logger.add("INFO", "URL_SUB: {}".format(SMA_EMA_RSI_URL.format(function, self.__symbol, tp, time_period,
-                                                                         series_type, self.__key)))
+                                                                           series_type, self.__key)))
             return pd.read_csv(
                 SMA_EMA_RSI_URL.format(function, self.__symbol, tp, time_period, series_type, self.__key),
                 nrows=sample_number)
@@ -83,13 +83,15 @@ class AlphaVantageTechnicalIndicators():
             if function is 'VWAP':
                 if tp in ['daily', 'weekly', 'monthly']:
                     raise Exception("Give interval in minutes")
-            logger.add("INFO", "URL_SUB: {}".format(VWAP_AD_OBV_STOCH_URL.format(function, self.__symbol, tp, self.__key)))
+            logger.add("INFO",
+                       "URL_SUB: {}".format(VWAP_AD_OBV_STOCH_URL.format(function, self.__symbol, tp, self.__key)))
             return pd.read_csv(
                 VWAP_AD_OBV_STOCH_URL.format(function, self.__symbol, tp, self.__key),
                 nrows=sample_number)
 
-        if function in ['ADX', 'CCI', 'AROON']:
-            logger.add("INFO", "URL_SUB: {}".format(ADX_CCI_AROON_URL.format(function, self.__symbol, tp, time_period, self.__key)))
+        if function in ['ADX', 'CCI', 'AROON', 'MFI']:
+            logger.add("INFO", "URL_SUB: {}".format(
+                ADX_CCI_AROON_URL.format(function, self.__symbol, tp, time_period, self.__key)))
             return pd.read_csv(
                 ADX_CCI_AROON_URL.format(function, self.__symbol, tp, time_period, self.__key),
                 nrows=sample_number)
@@ -103,8 +105,9 @@ class AlphaVantageTechnicalIndicators():
         if function is 'BBANDS':
             nbdu = str(nbdu)
             nbdd = str(nbdd)
-            logger.add("INFO", "URL_SUB: {}".format(BB_URL.format(self.__symbol, tp, time_period, series_type, nbdu, nbdd,
-                                                                self.__key)))
+            logger.add("INFO",
+                       "URL_SUB: {}".format(BB_URL.format(self.__symbol, tp, time_period, series_type, nbdu, nbdd,
+                                                          self.__key)))
             return pd.read_csv(
                 BB_URL.format(self.__symbol, tp, time_period, series_type, nbdu, nbdd, self.__key),
                 nrows=sample_number)

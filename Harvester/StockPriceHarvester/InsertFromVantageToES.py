@@ -23,9 +23,9 @@ class VantageToES(Logger):
     def __from_vantage_to_es(self):
         code_list, symbol_list, security_name = Utils.join_nse_bse_listing(os.path.dirname((os.getcwd())))
         # Due to the everyday API restriction we will process 100 per day
-        code_list = code_list[:50]
-        symbol_list = symbol_list[:50]
-        security_name = security_name[:50]
+        code_list = code_list[:Constants.INSERTION_OFFSET]
+        symbol_list = symbol_list[:Constants.INSERTION_OFFSET]
+        security_name = security_name[:Constants.INSERTION_OFFSET]
         for i in range(len(code_list)):
             try:
                 stock_data = self.model.fetch(str(code_list[i]) + '.BSE', self.time)
@@ -50,6 +50,7 @@ class VantageToES(Logger):
     def __insert_into_es(self, stock_data):
         if stock_data is None:
             return
+        # naming = stock_data.iloc[0]['symbol']
         for (_, item) in stock_data.to_dict(orient='index').items():
             if self.interval is 'D':
                 self.es.index(index=Constants.HIST_TECH_DATA_DAILY_INDEX, body=item)
@@ -60,10 +61,10 @@ class VantageToES(Logger):
                  format(stock_data['security_name'][0]))
 
 
-if __name__ == '__main__':
-    """Insert the last 4 years data."""
-    VantageToES(time=365 * 4)
-    data = pd.read_csv(os.path.dirname((os.getcwd())) + "\\resources\\Final_listing_2020.csv")
-    data = data.iloc[50:]
-    data.to_csv(os.path.dirname((os.getcwd())) + "\\resources\\Final_listing_2020.csv", index=False)
-    print("DONE")
+# if __name__ == '__main__':
+#     """Insert the last 4 years data."""
+#     VantageToES(time=365 * 4)
+#     data = pd.read_csv(os.path.dirname((os.getcwd())) + "\\resources\\Final_listing_2020.csv")
+#     data = data.iloc[Constants.INSERTION_OFFSET:]
+#     data.to_csv(os.path.dirname((os.getcwd())) + "\\resources\\Final_listing_2020.csv", index=False)
+#     print("DONE")

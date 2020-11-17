@@ -6,7 +6,7 @@ from VisualisationSector.Graphs import VisualAnalysis
 
 class TechModel(Logger):
     INTERVAL = 'D'
-    TIME_PERIOD = 365 * 2
+    TIME_PERIOD = 365
     p_items = {}
 
     def __init__(self):
@@ -17,13 +17,30 @@ class TechModel(Logger):
 
     def analyse(self, stock_indicator, from_live=False):
         annual_data = self.__get_stock_data(stock_indicator, from_live)
+
+        self.p_items['price'] = self.graph_model.get_trend_line(annual_data, col_name='close', show_graph=False)
         self.p_items['cd_stick'] = self.graph_model.get_candlestick(annual_data, show_graph=False)
-        self.p_items['price'] = self.graph_model.get_trend_line(annual_data, show_graph=False)
         self.p_items['volume'] = self.graph_model.get_volume_hist(annual_data, show_graph=False)
+        if 'MACD' in annual_data.columns:
+            self.add("INFO", "MACD Data exists.")
+            self.p_items['MACD'] = self.graph_model.get_macd_plot(annual_data, show_graph=False)
+        if 'MFI' in annual_data.columns:
+            self.add("INFO", "MFI Data exists.")
+            self.p_items['MFI'] = self.graph_model.get_trend_line(annual_data, col_name='MFI', show_graph=False)
+        if 'ADX' in annual_data.columns:
+            self.add("INFO", "MFI Data exists.")
+            self.p_items['ADX'] = self.graph_model.get_trend_line(annual_data, col_name='ADX', show_graph=False)
 
         self.graph_model.show_all(self.p_items, stock_indicator)
 
-        # max_min_points = get_max_min_points(annual_data, 'adjusted_close')
+        """Check for higher-highs and higher-lows for uptrend and lower-highs and lower-lows for down trend"""
+
+        """Momentum check with MACD hist."""
+
+        """ Dow's check - Volume must confirm the trend
+                        - Averages must confirm each other check with NIFTY, SENSEX etc"""
+
+        # max_min_points = get_max_min_point s(annual_data, 'adjusted_close')
         # Formulate a way to get expected returns and stop-loss percentage
 
         expected_return_percentage, stop_loss_percentage = (0.2, 0.005)
@@ -45,4 +62,4 @@ class TechModel(Logger):
 if __name__ == "__main__":
     A = TechModel()
     # A.analyse('TITAN')
-    A.analyse('ASIANHOTNR', from_live=False)
+    A.analyse('TITAN', from_live=False)

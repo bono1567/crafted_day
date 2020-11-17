@@ -177,5 +177,6 @@ class FetchHistFromES(Logger):
 #
 #     A = FetchHistFromES('D', 365)
 #     # print(A.get_stock_data("MTNL").head())
-#     B = A.get_stock_data("TITAN", True).head()
+#     B = A.get_stock_data("TITAN", False)
+#     print(B.shape)
 #     print("DONE")

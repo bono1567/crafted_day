@@ -1,12 +1,12 @@
 import pandas as pd
 from bokeh.plotting import figure, ColumnDataSource
 from bokeh.io import curdoc, show, output_file
-from bokeh.layouts import row, column
+from bokeh.layouts import column
 from bokeh.models.widgets import Tabs, Panel
-from bokeh.models import BooleanFilter, CDSView, HoverTool, DatetimeTickFormatter
+from bokeh.models import BooleanFilter, CDSView, HoverTool, DatetimeTickFormatter, Slope
 from bokeh.palettes import Category20
 from bokeh.models.formatters import NumeralTickFormatter
-from Models.Utils.CalculationUtils import get_max_min_points
+from Harvester.Utils import get_max_min_points
 from LoggerApi.Logger import Logger
 
 
@@ -118,7 +118,7 @@ class VisualAnalysis(Logger):
 
         hover_tool = HoverTool(tooltips=[
             ("Date", "@time{%d-%b-%y}"),
-            (col_name.upper(), "@"+col_name+"{0,0.00}"),
+            (col_name.upper(), "@" + col_name + "{0,0.00}"),
             ("Close", "@close{Rs.0,0.00}"),
             ("Volume", "@volume{(0.00 a)}")
         ], renderers=[main_line], formatters={"@time": 'datetime'})
@@ -213,7 +213,7 @@ class VisualAnalysis(Logger):
         return p
 
     def __set_xy_settings(self, p):
-        # p.xaxis.formatter = self.d_formatter
+        p.xaxis.formatter = self.d_formatter
         p.xaxis.major_label_orientation = 3.14 / 4
         p.grid.grid_line_alpha = 0.3
 
@@ -234,6 +234,8 @@ class VisualAnalysis(Logger):
             panels.append(Panel(child=column(items['MFI'], items['cd_stick']), title='MFI'))
         if 'ADX' in items.keys():
             panels.append(Panel(child=column(items['ADX'], items['cd_stick']), title='ADX'))
+        if 'PITCH_FORK' in items.keys():
+            panels.append(Panel(child=column(items['PITCH_FORK']), title="MOD. SCHIFF'S PITCHFORK"))
         tabs = Tabs(tabs=panels)
         elements = list()
         elements.append(tabs)
@@ -242,3 +244,60 @@ class VisualAnalysis(Logger):
         output_file(stock_name + '_TABS.html')
         show(tabs)
         self.add("INFO", "TABS VIEW ON.")
+
+    """Other util plots"""
+
+    def get_line(self, point_a, point_b, p=None, colour='gray', show_graph=False):
+        title = 'UTIL_PLOT'
+
+        if p is None:
+            p = figure(x_axis_type="datetime", plot_width=self.__W_PLOT, plot_height=self.__H_PLOT - 200,
+                       tools=self.__TOOLS
+                       , title=title, toolbar_location='above', y_range=(-abs(point_a['x'] + 0.2 * point_a['x']),
+                                                                         abs(point_a['x'] + 0.2 * point_a['x'])))
+
+        if colour is 'b':
+            color = self.__BLUE
+        elif colour is 'g':
+            color = self.__GREEN
+        elif colour is 'r':
+            color = self.__RED
+        else:
+            color = self.__GRAY
+        p.line([point_a['x'], point_b['x']], [point_a['y'], point_b['y']], line_width=4, color=color)
+        p.circle([point_a['x'], point_b['x']], [point_a['y'], point_b['y']], size=10, color=color)
+        self.__set_xy_settings(p)
+
+        elements = list()
+        elements.append(p)
+        curdoc().add_root(column(elements))
+
+        if show_graph:
+            show(p)
+
+        return p
+
+    def get_slope_for_pitch_fork(self, m, b, p=None, show_graph=False):
+        title = 'UTIL_PLOT_SLOPE'
+
+        if p is None:
+            p = figure(x_axis_type="datetime", plot_width=self.__W_PLOT, plot_height=self.__H_PLOT - 200,
+                       tools=self.__TOOLS
+                       , title=title, toolbar_location='above')
+
+        p.add_layout(Slope(gradient=m, y_intercept=b['UP'], line_color=self.__GRAY))
+        p.add_layout(Slope(gradient=m, y_intercept=b['UPM'], line_color=self.__GREEN))
+        p.add_layout(Slope(gradient=m, y_intercept=b['MID'], line_color=self.__BLUE))
+        p.add_layout(Slope(gradient=m, y_intercept=b['DNM'], line_color=self.__RED))
+        p.add_layout(Slope(gradient=m, y_intercept=b['DN'], line_color=self.__GRAY))
+
+        self.__set_xy_settings(p)
+
+        elements = list()
+        elements.append(p)
+        curdoc().add_root(column(elements))
+
+        if show_graph:
+            show(p)
+
+        return p

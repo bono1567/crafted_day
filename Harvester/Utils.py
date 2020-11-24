@@ -54,3 +54,24 @@ def join_nse_bse_listing(cwd, just_get=True):
     final_data = bse[bse['ISIN NUMBER'].isin(nse_isin)]
     final_data.to_csv(cwd + "\\resources\\Final_Listing_2020.csv", index=False)
     return final_data['Security Code'].values, final_data['Security Id'].values, final_data['Security Name'].values
+
+
+"""This only used in Models.Graphs import so far"""
+
+
+def get_max_min_points(data, column_name):
+    if column_name not in data.columns.values:
+        raise KeyError
+    max_min_index = []
+    data_list = data[column_name].values
+    index_list = data['time'].values
+    size = data.shape[0]
+    if size <= 3:
+        return data[['time', column_name]]
+    for i in range(1, size - 1):
+        if data_list[i - 1] < data_list[i] and data_list[i] > data_list[i + 1]:  # Maxima point
+            max_min_index.append(index_list[i])
+        if data_list[i - 1] > data_list[i] and data_list[i] < data_list[i + 1]:  # Minima point
+            max_min_index.append(index_list[i])
+
+    return data[['time', column_name]][data['time'].isin(max_min_index)]

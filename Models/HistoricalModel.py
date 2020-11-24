@@ -1,6 +1,9 @@
+import copy
+
 from Harvester.StockPriceHarvester.DataArrangement import FetchHistFromES
+from Harvester.Utils import get_max_min_points
 from LoggerApi.Logger import Logger
-from Models.Utils.CalculationUtils import RiskRewardForStock, get_max_min_points
+from Models.Utils.CalculationUtils import RiskRewardForStock, PitchFork
 from VisualisationSector.Graphs import VisualAnalysis
 
 
@@ -31,6 +34,12 @@ class TechModel(Logger):
             self.add("INFO", "MFI Data exists.")
             self.p_items['ADX'] = self.graph_model.get_trend_line(annual_data, col_name='ADX', show_graph=False)
 
+        """Automate the selection of the pitch-fork points. For now random max-min points are being used."""
+        max_min_points = get_max_min_points(annual_data, 'close')
+        point_x = max_min_points['time'].values
+        point_y = max_min_points['close'].values
+        pitch_fork_model = PitchFork(point_x[0:3], point_y[0:3])
+        self.p_items['PITCH_FORK'] = pitch_fork_model.get_plot(self.p_items['price'])
         self.graph_model.show_all(self.p_items, stock_indicator)
 
         """Check for higher-highs and higher-lows for uptrend and lower-highs and lower-lows for down trend"""

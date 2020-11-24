@@ -61,10 +61,10 @@ class VantageToES(Logger):
                  format(stock_data['security_name'][0]))
 
 
-# if __name__ == '__main__':
-#     """Insert the last 4 years data."""
-#     VantageToES(time=365 * 4)
-#     data = pd.read_csv(os.path.dirname((os.getcwd())) + "\\resources\\Final_listing_2020.csv")
-#     data = data.iloc[Constants.INSERTION_OFFSET:]
-#     data.to_csv(os.path.dirname((os.getcwd())) + "\\resources\\Final_listing_2020.csv", index=False)
-#     print("DONE")
+if __name__ == '__main__':
+    """Insert the last 4 years data."""
+    VantageToES(time=365 * 3)
+    data = pd.read_csv(os.path.dirname((os.getcwd())) + "\\resources\\Final_listing_2020.csv")
+    data = data.iloc[Constants.INSERTION_OFFSET:]
+    data.to_csv(os.path.dirname((os.getcwd())) + "\\resources\\Final_listing_2020.csv", index=False)
+    print("DONE")

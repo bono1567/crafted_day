@@ -67,14 +67,14 @@ class PitchFork:
         self.__point_1 = {'x': points_x[2], 'y': points_y[2]}
         self.__point_2 = {'x': points_x[1], 'y': points_y[1]}
         self.__point_3 = {'x': points_x[0], 'y': points_y[0]}
-        convention = self.__point_2['y'] > self.__point_1['y']  # Min-Max-Min convention
+        self.__convention = self.__point_2['y'] > self.__point_1['y']  # Min-Max-Min convention
         if mode == 'ModSchiff':
             self.__mid_12 = get_mid_point(self.__point_1, self.__point_2)
             self.__mid_23 = get_mid_point(self.__point_2, self.__point_3)
             self.__M = get_slope(self.__mid_12, self.__mid_23)
             self.__m1 = get_mid_point(self.__mid_23, self.__point_3)
             self.__m2 = get_mid_point(self.__point_2, self.__mid_23)
-            if not convention :
+            if not self.convention :
                 self.__b['UP'] = self.__get_b_of_line(self.__point_3)
                 self.__b['DN'] = self.__get_b_of_line(self.__point_2)
                 self.__b['UPM'] = self.__get_b_of_line(self.__m1)
@@ -92,7 +92,7 @@ class PitchFork:
 
     def get_all(self):
         return {'mid_23': self.__mid_23, 'mid_12': self.__mid_12, 'M': self.__M, 'm1': self.__m1, 'm2': self.__m2,
-                'b': self.__b}
+                'b': self.__b, 'convention': self.__convention}
 
     def check_price_state(self, x, y):
         # Put condition for checking where the current price lies. To signal BUY/SELL
@@ -126,6 +126,11 @@ class PitchFork:
         logger.add('INFO', 'The Pitchfork graph is created.')
 
         return p
+
+
+def transcend_pitchfork(data):
+
+    model = PitchFork
 
 
 if __name__ == '__main__':

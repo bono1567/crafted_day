@@ -14,7 +14,7 @@ TODO: Make the print to logger change
 logger = Logger(__file__, "LOGGER_VANTAGE")
 
 
-class AlphaVantageStocks():
+class AlphaVantageStocks:
     __key = Constants.KEY
     __uri = URL
     __key_map = {

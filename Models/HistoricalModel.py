@@ -36,9 +36,7 @@ class TechModel(Logger):
 
         """Automate the selection of the pitch-fork points. For now random max-min points are being used."""
         max_min_points = get_max_min_points(annual_data, 'close')
-        point_x = max_min_points['time'].values
-        point_y = max_min_points['close'].values
-        pitch_fork_model = PitchFork(point_x[0:3], point_y[0:3])
+        # pitch_fork_model =
         self.p_items['PITCH_FORK'] = pitch_fork_model.get_plot(self.p_items['price'])
         self.graph_model.show_all(self.p_items, stock_indicator)
 

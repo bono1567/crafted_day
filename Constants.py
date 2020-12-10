@@ -52,3 +52,9 @@ AL = "ARE-LRI"  # Average return, low risk
 AA = "ARE-ARI"  # Average return, average risk
 LH = "LRE-HRI"  # Low return, high risk
 TOTAL_UNITS_TO_BUY = 20
+
+# Pitch fork constants
+EVAL_TIMESTAMP = '2021-01-01 00:00:00'
+MONTH_OF_TEST = 3
+MONTH_OF_ANALYSIS = 5
+REVISION_THRESHOLD = 0.03

@@ -133,6 +133,7 @@ class FetchHistFromES(Logger):
                     self.add("ERROR", "The data doesn't exist in Alpha-Vantage DB. Symbol Used: {}. Company: {}"
                              .format(other_data[0], other_data[2]))
                     stock_data = None
+            stock_data['time'] = pd.to_datetime([str(x) for x in stock_data['time']])
             return stock_data
         else:
             query = Constants.SEARCH_FOR_HIST_STOCK_DATA

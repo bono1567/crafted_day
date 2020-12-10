@@ -8,8 +8,14 @@ from elasticsearch.exceptions import RequestError
 
 
 def process_date(data):
-    final_date = [datetime.strptime(str(x), '%d%m%Y').strftime('%d-%b-%Y') for x in data]
-    return final_date
+    try:
+        final_date = [datetime.strptime(str(x), '%d%m%Y').strftime('%d-%b-%Y') for x in data]
+        return final_date
+    except ValueError:
+        final_date = [
+            datetime.strptime('0' + str(x)[0] + '/' + str(x)[1:3] + '/' + str(x)[-4:], '%d/%m/%Y').strftime('%d-%b-%Y')
+            for x in data]
+        return final_date
 
 
 def weekly_report_to_json():
@@ -17,15 +23,16 @@ def weekly_report_to_json():
     first_file_indicator = True
     for file in DAILY_DATA_FILES:
         if first_file_indicator:
-            data = pd.read_csv(file)
+            data_weekly = pd.read_csv(file, low_memory=False)
             first_file_indicator = False
         else:
             temp_data = pd.read_csv(file)
-            data = pd.concat([data, temp_data], axis=0)
-    data.reset_index(inplace=True)
-    data['isExDateFlag'] = 0.0
-    data['processingDate'] = process_date(data['processingDate'])
-    data.to_json(".\\resources\\WEEKLY_JSON_TMP_{}.json".format(datetime.now().strftime('%d%m%Y')), orient='index')
+            data = pd.concat([data_weekly, temp_data], axis=0)
+    data_weekly.reset_index(inplace=True)
+    data_weekly['isExDateFlag'] = 0.0
+    data_weekly['processingDate'] = process_date(data_weekly['processingDate'])
+    data_weekly.to_json(".\\resources\\WEEKLY_JSON_TMP_{}.json".format(datetime.now().strftime('%d%m%Y')),
+                        orient='index')
 
 
 def insert_to_es_index(logger):  # ES time outs while inserting the data.
@@ -37,7 +44,7 @@ def insert_to_es_index(logger):  # ES time outs while inserting the data.
         data = json.loads(f.read())
     for index in data.keys():
         try:
-            es.index(index=Constants.COMPLETE_DATA_INDEX,  body=data[index])
+            es.index(index=Constants.COMPLETE_DATA_INDEX, body=data[index])
             logger.add("INFO", "INDEX DONE: " + data[index]['symbol'])
         except RequestError:
             logger.add("ERROR", "Incorrect fields format in one of the entries in index: {}".format(index))
@@ -65,6 +72,7 @@ def get_max_min_points(data, column_name):
     max_min_index = []
     data_list = data[column_name].values
     index_list = data['time'].values
+    max_min_index.append(index_list[0])
     size = data.shape[0]
     if size <= 3:
         return data[['time', column_name]]
@@ -75,3 +83,7 @@ def get_max_min_points(data, column_name):
             max_min_index.append(index_list[i])
 
     return data[['time', column_name]][data['time'].isin(max_min_index)]
+
+# if __name__ == '__main__':
+#     weekly_report_to_json()
+#     insert_to_es_index()

@@ -10,6 +10,15 @@ from Harvester.Utils import get_max_min_points
 from LoggerApi.Logger import Logger
 
 
+def get_point_data(data_points):
+    x = []
+    y = []
+    for item in data_points:
+        x.append(item['x'])
+        y.append(item['y'])
+    return x, y
+
+
 class VisualAnalysis(Logger):
     __W_PLOT = 1000
     __H_PLOT = 400
@@ -253,8 +262,8 @@ class VisualAnalysis(Logger):
         if p is None:
             p = figure(x_axis_type="datetime", plot_width=self.__W_PLOT, plot_height=self.__H_PLOT - 200,
                        tools=self.__TOOLS
-                       , title=title, toolbar_location='above', y_range=(-abs(point_a['x'] + 0.2 * point_a['x']),
-                                                                         abs(point_a['x'] + 0.2 * point_a['x'])))
+                       , title=title, toolbar_location='above', y_range=(-abs(point_a['y'] + 0.2 * point_a['y']),
+                                                                         abs(point_a['y'] + 0.2 * point_a['y'])))
 
         if colour is 'b':
             color = self.__BLUE
@@ -277,19 +286,32 @@ class VisualAnalysis(Logger):
 
         return p
 
-    def get_slope_for_pitch_fork(self, m, b, p=None, show_graph=False):
-        title = 'UTIL_PLOT_SLOPE'
-
+    def get_slope_for_pitch_fork(self, m, b, plot_data, p=None, show_graph=False, layout=False, debug=False):
         if p is None:
-            p = figure(x_axis_type="datetime", plot_width=self.__W_PLOT, plot_height=self.__H_PLOT - 200,
-                       tools=self.__TOOLS
-                       , title=title, toolbar_location='above')
+            p = figure(x_axis_type="datetime", plot_width=self.__W_PLOT, plot_height=self.__W_PLOT - 800,
+                       tools=self.__TOOLS, toolbar_location='above')
 
-        p.add_layout(Slope(gradient=m, y_intercept=b['UP'], line_color=self.__GRAY))
-        p.add_layout(Slope(gradient=m, y_intercept=b['UPM'], line_color=self.__GREEN))
-        p.add_layout(Slope(gradient=m, y_intercept=b['MID'], line_color=self.__BLUE))
-        p.add_layout(Slope(gradient=m, y_intercept=b['DNM'], line_color=self.__RED))
-        p.add_layout(Slope(gradient=m, y_intercept=b['DN'], line_color=self.__GRAY))
+        point_data = {'MID': get_point_data(plot_data['MID']), 'REV': get_point_data(plot_data['REV'])}
+
+        p = self.get_line(plot_data['point_1'], plot_data['point_2'], p=p, colour='b')
+        p = self.get_line(plot_data['point_2'], plot_data['point_3'], p=p, colour='b')
+        p = self.get_line(plot_data['mid_23'], plot_data['mid_12'], p=p)
+        p = self.get_line(plot_data['point_2'], plot_data['GRAD_UP'], p=p)  # UP
+        p = self.get_line(plot_data['point_3'], plot_data['GRAD_DN'], p=p)  # DN
+        p = self.get_line(plot_data['mid_23'], plot_data['GRAD_MID'], p=p, colour='b')  # MID
+        p = self.get_line(plot_data['m1'], plot_data['GRAD_UPM'], p=p, colour='g')  # UPM
+        p = self.get_line(plot_data['m2'], plot_data['GRAD_DNM'], p=p, colour='r')  # DNM
+
+        if debug:
+            p.circle(x=point_data['MID'][0], y=point_data['MID'][1], size=10, color=self.__GRAY)
+            p.circle(x=point_data['REV'][0], y=point_data['REV'][1], size=10, color=self.__RED)
+
+        if layout:
+            p.add_layout(Slope(gradient=m, y_intercept=b['UP'], line_color=self.__GRAY))
+            p.add_layout(Slope(gradient=m, y_intercept=b['UPM'], line_color=self.__GREEN))
+            p.add_layout(Slope(gradient=m, y_intercept=b['MID'], line_color=self.__BLUE))
+            p.add_layout(Slope(gradient=m, y_intercept=b['DNM'], line_color=self.__RED))
+            p.add_layout(Slope(gradient=m, y_intercept=b['DN'], line_color=self.__GRAY))
 
         self.__set_xy_settings(p)
 

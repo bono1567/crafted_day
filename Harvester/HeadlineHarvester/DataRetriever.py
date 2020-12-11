@@ -1,12 +1,12 @@
+"""FT Times headlines aggregator. """
+
 import requests
 import pandas as pd
 from LoggerApi.Logger import Logger
 
-"""TODO: Multiple logger issue still pertains but the dat is not getting duplicated or APIs are not being called 
-twice. """
-
 
 class FinancialTimes(Logger):
+    """FT Times Headline API aggregator."""
     __url = "http://api.ft.com/content/search/v1"
     __qstr = {"apiKey": "59cbaf20e3e06d3565778e7b14cce0b217a844419dcc5bb1cc3ad4e9"}
     __payload = '{"queryString": "{}","resultContext" : {"aspects" :[ "summary","lifecycle"{}]}}'
@@ -29,14 +29,16 @@ class FinancialTimes(Logger):
         self.add('INFO', "Final FT news data for keyword: {}".format(query))
 
     def response_json(self):
-
+        """Get the JSON response from the URL"""
         return requests.request("POST", self.__url, data=self.__payload, headers=self.__headers,
                                 params=self.__qstr).json()
 
     def get_result(self):
+        """Return the result in JSON"""
         return self.response_json()['results'][0]['results']
 
     def get_final_components(self):
+        """:return list of dict with different keys from the API response."""
         results = self.get_result()
         final_result = []
         for result in results:
@@ -47,26 +49,31 @@ class FinancialTimes(Logger):
                 if self.__title:
                     components_dict['title'] = result['title']['title']
                 final_result.append(components_dict)
-            except KeyError as e:
-                self.add('ERROR', "Key Missing in result. {}".format(e))
+            except KeyError as exp:
+                self.add('ERROR', "Key Missing in result. {}".format(exp))
         self.add('INFO', "Final FT get_final_components.")
         return final_result
 
 
 class FTArrangement(FinancialTimes):
+    """Mainly for converting the JSON response to pandas DataFrame."""
     def __init__(self, comp_name="stocks"):
         super().__init__(FTArrangement.__name__)
         super().__init__(comp_name, True)
         self.__data = self.get_final_components()
 
     def get_summary_date_api(self, title=False):
-        self.add('INFO', "SUMMARY/DATE/API called. With title as {}.".format(title))
-        data = pd.DataFrame(data=self.__data, columns=['aspectSet', 'apiUrl', 'publishDate', 'summary', 'title'])
+        """:return pandas df with summary, title and other components"""
+        self.add('INFO', "SUMMARY/DATE/API called."
+                         " With title as {}.".format(title))
+        data = pd.DataFrame(data=self.__data,
+                            columns=['aspectSet', 'apiUrl', 'publishDate', 'summary', 'title'])
         if title is False:
             return data.drop(['aspectSet', 'title'], axis=1)
         return data.drop('aspectSet', axis=1)
 
     def get_summary_for_w2v(self, title=False):
+        """:returns List with summary and title which are comma seperated."""
         all_summary = []
         all_title = []
         self.add('INFO', "SUMMARY/DATE/API/W2V called. With title as {}.".format(title))

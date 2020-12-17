@@ -1,72 +1,83 @@
+"""Utility methods for Harvester module"""
 import json
+import glob
 from datetime import datetime
 import pandas as pd
-import glob
-import Constants
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import RequestError
+import Constants
 
 
 def process_date(data):
+    """:return List of dates"""
     try:
         final_date = [datetime.strptime(str(x), '%d%m%Y').strftime('%d-%b-%Y') for x in data]
         return final_date
     except ValueError:
         final_date = [
-            datetime.strptime('0' + str(x)[0] + '/' + str(x)[1:3] + '/' + str(x)[-4:], '%d/%m/%Y').strftime('%d-%b-%Y')
+            datetime.strptime('0' + str(x)[0] + '/' + str(x)[1:3] + '/' + str(x)[-4:],
+                              '%d/%m/%Y').strftime('%d-%b-%Y')
             for x in data]
         return final_date
 
 
 def weekly_report_to_json():
-    DAILY_DATA_FILES = [daily_data for daily_data in glob.glob(".\\resources\\*.csv*") if "WEEK" in daily_data]
+    """Converts the CSV file to JSON for ES consumption."""
+    daily_data_files = [daily_data for daily_data in
+                        glob.glob(".\\resources\\*.csv*") if "WEEK" in daily_data]
     first_file_indicator = True
-    for file in DAILY_DATA_FILES:
+    for file in daily_data_files:
         if first_file_indicator:
             data_weekly = pd.read_csv(file, low_memory=False)
             first_file_indicator = False
         else:
             temp_data = pd.read_csv(file)
-            data = pd.concat([data_weekly, temp_data], axis=0)
+            data_weekly = pd.concat([data_weekly, temp_data], axis=0)
     data_weekly.reset_index(inplace=True)
     data_weekly['isExDateFlag'] = 0.0
     data_weekly['processingDate'] = process_date(data_weekly['processingDate'])
-    data_weekly.to_json(".\\resources\\WEEKLY_JSON_TMP_{}.json".format(datetime.now().strftime('%d%m%Y')),
-                        orient='index')
+    data_weekly.to_json(".\\resources\\WEEKLY_JSON_TMP_{}.json".format(
+        datetime.now().strftime('%d%m%Y')), orient='index')
 
 
 def insert_to_es_index(logger):  # ES time outs while inserting the data.
-    es = Elasticsearch(Constants.ES_URL, port=Constants.ES_PORT, retry_on_timeout=True, sniff_on_start=True,
-                       sniff_on_connection_fail=True,
-                       sniffer_timeout=60)
+    """Insert the JSON data to ES."""
+    elastic_search = Elasticsearch(Constants.ES_URL, port=Constants.ES_PORT,
+                                   retry_on_timeout=True, sniff_on_start=True,
+                                   sniff_on_connection_fail=True,
+                                   sniffer_timeout=60)
     file_name = glob.glob(".\\resources\\*.json*")[0]
-    with open(file_name, 'r', encoding='utf-8') as f:
-        data = json.loads(f.read())
+    with open(file_name, 'r', encoding='utf-8') as file_json:
+        data = json.loads(file_json.read())
     for index in data.keys():
         try:
-            es.index(index=Constants.COMPLETE_DATA_INDEX, body=data[index])
+            elastic_search.index(index=Constants.COMPLETE_DATA_INDEX, body=data[index])
             logger.add("INFO", "INDEX DONE: " + data[index]['symbol'])
         except RequestError:
-            logger.add("ERROR", "Incorrect fields format in one of the entries in index: {}".format(index))
+            logger.add("ERROR",
+                       "Incorrect fields format in one of the entries in index: {}".format(index))
 
 
 def join_nse_bse_listing(cwd, just_get=True):
+    """Merge the NSE and BSE stocks list"""
     if just_get:
         final_data = pd.read_csv(cwd + "\\resources\\Final_Listing_2020.csv")
-        return final_data['Security Code'].values, final_data['Security Id'].values, final_data['Security Name'].values
+        return [final_data['Security Code'].values,
+                final_data['Security Id'].values,
+                final_data['Security Name'].values]
     nse = pd.read_csv(cwd + "\\resources\\NSE_Listing_2020.csv")
     nse_isin = nse['ISIN NUMBER'].values
     bse = pd.read_csv(cwd + "\\resources\\BSE_Listing_2020.csv")
     nse['ISIN NUMBER'] = nse['ISIN NUMBER'].astype(str)
     final_data = bse[bse['ISIN NUMBER'].isin(nse_isin)]
     final_data.to_csv(cwd + "\\resources\\Final_Listing_2020.csv", index=False)
-    return final_data['Security Code'].values, final_data['Security Id'].values, final_data['Security Name'].values
-
-
-"""This only used in Models.Graphs import so far"""
+    return [final_data['Security Code'].values,
+            final_data['Security Id'].values,
+            final_data['Security Name'].values]
 
 
 def get_max_min_points(data, column_name):
+    """This only used in Models.Graphs import so far"""
     if column_name not in data.columns.values:
         raise KeyError
     max_min_index = []

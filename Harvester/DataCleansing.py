@@ -22,6 +22,7 @@ DAILY_DATA_FILES = [daily_data for daily_data in
 LOG_FILES = [logs for logs in
              glob.glob(os.path.dirname(os.path.dirname(__file__)) + "\\*LOG*") if "LOG" in logs]
 FIRST_FILE_INDICATOR = True
+FINAL_DATA = None
 
 for file in DAILY_DATA_FILES:
     date = file.split("\\")[2].split(".")[0].split("_")[-1:][0]
@@ -60,11 +61,7 @@ try:
         Utils.insert_to_es_index(LOGGER)  # Insert the file to ES
         LOGGER.add("INFO", "Insertion into ES was successful")
         for file in [weekly_json for weekly_json in glob.glob(".\\resources\\*JSON*")]:
-            try:
-                shutil.move(file, DESTINATION_FOLDER)
-            except shutil.Error:
-                LOGGER.add("ERROR", "File already exists")
-                os.remove(file)
+            os.remove(file)
     except ConnectionTimeout:
         LOGGER.add("ERROR", "Connection Timed out while inserting")
     except ConflictError:

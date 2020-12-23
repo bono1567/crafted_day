@@ -20,6 +20,7 @@ SEARCH_FOR_HIST_STOCK_DATA = {
 }
 
 SEARCH_FOR_STOCK_DATA = {
+    "size": 1500,
     "_source": ["symbol", "closePrice", "open", "dayHigh", "dayLow", "previousClose", "faceValue", "lastPrice",
                 "extremeLossMargin", "pricebandlower", "pricebandupper", "companyName", "quantityTraded", "pChange",
                 "totalBuyQuantity", "totalSellQuantity", "processingDate", "isExDateFlag"],
@@ -58,3 +59,16 @@ EVAL_TIMESTAMP = '2021-01-01 00:00:00'
 MONTH_OF_TEST = 3
 MONTH_OF_ANALYSIS = 5
 REVISION_THRESHOLD = 0.03
+
+# Trend constants
+UP_SG = "STRONG UP"
+UP_WK = "WEAK UP"
+UP = "UP"
+DN_SG = "STRONG DOWN"
+DN_WK = "WEAK DOWN"
+DOWN = "DOWN"
+STAGNANT = "STAGNANT"
+
+# Momentum constants
+BULL = "BULLISH"
+BEAR = "BEARISH"

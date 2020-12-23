@@ -8,17 +8,21 @@ from elasticsearch.exceptions import RequestError
 import Constants
 
 
+def convert_to_same(timestamp):
+    timestamp = timestamp[:1] + '/' + timestamp[1:3] + '/' + timestamp[-4:]
+    return datetime.strptime(timestamp, '%d/%m/%Y')
+
+
 def process_date(data):
     """:return List of dates"""
-    try:
-        final_date = [datetime.strptime(str(x), '%d%m%Y').strftime('%d-%b-%Y') for x in data]
-        return final_date
-    except ValueError:
-        final_date = [
-            datetime.strptime('0' + str(x)[0] + '/' + str(x)[1:3] + '/' + str(x)[-4:],
-                              '%d/%m/%Y').strftime('%d-%b-%Y')
-            for x in data]
-        return final_date
+    final_date = []
+    for timestamp in data:
+        if len(str(timestamp)) == 8:
+            final_date.append(datetime.strptime(str(timestamp), '%d%m%Y').strftime('%d-%b-%Y'))
+        else:
+            final_date.append(convert_to_same(str(timestamp)).strftime('%d-%b-%Y'))
+
+    return final_date
 
 
 def weekly_report_to_json():
@@ -26,6 +30,7 @@ def weekly_report_to_json():
     daily_data_files = [daily_data for daily_data in
                         glob.glob(".\\resources\\*.csv*") if "WEEK" in daily_data]
     first_file_indicator = True
+    data_weekly = None
     for file in daily_data_files:
         if first_file_indicator:
             data_weekly = pd.read_csv(file, low_memory=False)
@@ -95,6 +100,8 @@ def get_max_min_points(data, column_name):
 
     return data[['time', column_name]][data['time'].isin(max_min_index)]
 
+
 # if __name__ == '__main__':
+#     LOGGER = Logger(__file__, "WEEKLY_GATHERING")
 #     weekly_report_to_json()
-#     insert_to_es_index()
+#     insert_to_es_index(logger=LOGGER)

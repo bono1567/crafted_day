@@ -262,7 +262,7 @@ def transcend_pitchfork(data):
 def get_trend_of_stock(annual_data):
     """:return String signifying UP, DOWN or STAGNANT."""
     max_min_data = get_max_min_points(annual_data, 'adjusted_close')
-    price = max_min_data['adjusted_close']
+    price = max_min_data['adjusted_close'].values
     size_of_data = len(price)
     up_count, down_count, prev_value = (0, 0, price[size_of_data - 1])
     for index in range(size_of_data - 3, 2, -2):

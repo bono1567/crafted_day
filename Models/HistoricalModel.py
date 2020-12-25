@@ -60,29 +60,26 @@ class TechModel(Logger):
         # Momentum check with MACD hist.
         self.other_data['momentum'] = get_momentum_from_macd(
             annual_data.head(25*Constants.MONTH_OF_TEST))
-        """ Dow's check - Volume must confirm the trend
-                        - Averages must confirm each other check with NIFTY, SENSEX etc"""
 
-        # max_min_points = get_max_min_point s(annual_data, 'adjusted_close')
-        # Formulate a way to get expected returns and stop-loss percentage
+        # Dow's check with NIFTY
+        # self.other_data['dow_check'] =
 
-        expected_return_percentage, stop_loss_percentage = (0.2, 0.005)
-        self.__set_risk_reward(annual_data, expected_return_percentage, stop_loss_percentage)
+        # Expected profit and loss from PITCHFORK analysis
+        y_for_all = pitchfork.get_y_for_all_lines(annual_data.iloc[0]['time'])
+
+        self.__set_risk_reward(y_for_all['DNM'], y_for_all['UP'], y_for_all['DN'])
 
     def __get_stock_data(self, stock_indicator, from_live):
         """Fetch stock data from harvester."""
         return self.es_model.get_stock_data(stock_indicator, from_live)
 
-    def __set_risk_reward(self, annual_data, exp_rw, stop_loss):
+    def __set_risk_reward(self, closed_value, expected_book_price, stop_loss_amount):
         """Set the risk reward for a particular stock."""
-        closed_value = annual_data.iloc[-1]['adjusted_close']
-        expected_book_price = closed_value + (closed_value * exp_rw)
-        stop_loss_amount = closed_value - (closed_value * stop_loss)
         self.rr_rating = self.rr_model.get_rating(
             closed_value, expected_book_price, stop_loss_amount)
         self.rr_ratio = self.rr_model.ratio
-        self.add("INFO", "R/R calculated: {} (Date of calculation: {})".format(
-            self.rr_ratio, annual_data.iloc[-1]['time']))
+        self.add("INFO", "R/R calculated: {:.4f} (Date of calculation: {})".format(
+            self.rr_ratio, closed_value))
 
 
 if __name__ == "__main__":

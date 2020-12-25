@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 from bokeh.plotting import figure, ColumnDataSource
 from bokeh.io import curdoc, show, output_file
@@ -8,6 +9,10 @@ from bokeh.palettes import Category20
 from bokeh.models.formatters import NumeralTickFormatter
 from Harvester.Utils import get_max_min_points
 from LoggerApi.Logger import Logger
+
+PATH_FOR_HTML = os.path.dirname(os.getcwd())
+PATH_FOR_OTHERS = PATH_FOR_HTML + '/ServiceProvider/static/'
+PATH_FOR_HTML += '/ServiceProvider/templates/'
 
 
 def get_point_data(data_points):
@@ -95,7 +100,7 @@ class VisualAnalysis(Logger):
         curdoc().add_root(column(elements))
         curdoc().title = stock_data.data['security_name'][0] + '_CS'
         if show_graph:
-            output_file(stock_data.data['symbol'][0] + '_CS.html',
+            output_file(PATH_FOR_OTHERS + stock_data.data['symbol'][0] + '_CS.html',
                         '{} {}'.format(stock_data.data['security_name'][0], stock_data.data['code'][0]))
             show(p)
 
@@ -139,7 +144,7 @@ class VisualAnalysis(Logger):
         curdoc().title = stock_data.data['security_name'][0] + '_' + col_name
 
         if show_graph:
-            output_file(stock_data.data['symbol'][0] + '_{}.html'.format(col_name),
+            output_file(PATH_FOR_OTHERS + stock_data.data['symbol'][0] + '_{}.html'.format(col_name),
                         '{} {}'.format(stock_data.data['security_name'][0], stock_data.data['code'][0]))
             show(p)
 
@@ -178,7 +183,7 @@ class VisualAnalysis(Logger):
         curdoc().title = stock_data.data['security_name'][0] + 'MACD'
 
         if show_graph:
-            output_file(stock_data.data['symbol'][0] + '_MACD.html',
+            output_file(PATH_FOR_OTHERS + stock_data.data['symbol'][0] + '_MACD.html',
                         '{} {}'.format(stock_data.data['security_name'][0], stock_data.data['code'][0]))
             show(p)
 
@@ -215,7 +220,7 @@ class VisualAnalysis(Logger):
         curdoc().title = stock_data.data['security_name'][0] + 'VOL'
 
         if show_graph:
-            output_file(stock_data.data['symbol'][0] + '_VOL.html',
+            output_file(PATH_FOR_OTHERS + stock_data.data['symbol'][0] + '_VOL.html',
                         '{} {}'.format(stock_data.data['security_name'][0], stock_data.data['code'][0]))
             show(p)
 
@@ -250,7 +255,7 @@ class VisualAnalysis(Logger):
         elements.append(tabs)
         curdoc().add_root(column(elements))
         curdoc().title = stock_name + '_TABS'
-        output_file(stock_name + '_TABS.html')
+        output_file(PATH_FOR_HTML + stock_name + '_TABS.html')
         show(tabs)
         self.add("INFO", "TABS VIEW ON.")
 

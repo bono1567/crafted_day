@@ -1,10 +1,25 @@
 """The state creation via models for the RL."""
+import json
+
+import numpy as np
 import Constants
 from Harvester.StockPriceHarvester.DataArrangement import FetchHistFromES
 from LoggerApi.Logger import Logger
 from Models.Utils.CalculationUtils import RiskRewardForStock, transcend_pitchfork, get_trend_of_stock, \
-    get_momentum_from_macd
+    get_momentum_from_macd, get_dow_check_correlation
 from VisualisationSector.Graphs import VisualAnalysis
+
+
+def change_time_of_pitchfork(pitchfork_data):
+    pitchfork_data['mid_23']['x'] = np.datetime_as_string(pitchfork_data['mid_23']['x'], timezone='local')
+    pitchfork_data['mid_12']['x'] = np.datetime_as_string(pitchfork_data['mid_12']['x'], timezone='local')
+    pitchfork_data['m1']['x'] = np.datetime_as_string(pitchfork_data['m1']['x'], timezone='local')
+    pitchfork_data['m2']['x'] = np.datetime_as_string(pitchfork_data['m2']['x'], timezone='local')
+    pitchfork_data['point_1']['x'] = np.datetime_as_string(pitchfork_data['point_1']['x'], timezone='local')
+    pitchfork_data['point_2']['x'] = np.datetime_as_string(pitchfork_data['point_2']['x'], timezone='local')
+    pitchfork_data['point_3']['x'] = np.datetime_as_string(pitchfork_data['point_3']['x'], timezone='local')
+    pitchfork_data['convention'] = "True" if pitchfork_data['convention'] else "False"
+    return pitchfork_data
 
 
 class TechModel(Logger):
@@ -22,7 +37,7 @@ class TechModel(Logger):
         self.rr_model = RiskRewardForStock()
         self.graph_model = VisualAnalysis()
 
-    def analyse(self, stock_indicator, from_live=False):
+    def analyse(self, stock_indicator, from_live=False, in_json=False):
         """The analyse a stock function."""
         annual_data = self.__get_stock_data(stock_indicator, from_live)
 
@@ -55,19 +70,25 @@ class TechModel(Logger):
 
         # Trend check
         self.other_data['trend'] = get_trend_of_stock(
-            annual_data.head(25*Constants.MONTH_OF_TEST))
+            annual_data.head(25 * Constants.MONTH_OF_TEST))
 
         # Momentum check with MACD hist.
         self.other_data['momentum'] = get_momentum_from_macd(
-            annual_data.head(25*Constants.MONTH_OF_TEST))
+            annual_data.head(25 * Constants.MONTH_OF_TEST))
 
         # Dow's check with NIFTY
-        # self.other_data['dow_check'] =
+        self.other_data['dow_check'] = get_dow_check_correlation(
+            annual_data[['time', 'adjusted_close']])
+        self.add('INFO', 'Dow check complete.')
 
         # Expected profit and loss from PITCHFORK analysis
-        y_for_all = pitchfork.get_y_for_all_lines(annual_data.iloc[0]['time'])
-
+        y_for_all = pitchfork.get_y_for_all_lines(annual_data['time'].values[0])
         self.__set_risk_reward(y_for_all['DNM'], y_for_all['UP'], y_for_all['DN'])
+
+        self.other_data['pitchfork'] = pitchfork.get_all()
+        if in_json:
+            return json.dumps(self.get_stats())
+        return self.get_stats()
 
     def __get_stock_data(self, stock_indicator, from_live):
         """Fetch stock data from harvester."""
@@ -81,8 +102,23 @@ class TechModel(Logger):
         self.add("INFO", "R/R calculated: {:.4f} (Date of calculation: {})".format(
             self.rr_ratio, closed_value))
 
+    def get_stats(self):
+        """Returns a dict of all the attributes calculated.
+        :returns 1. Pitchfork.
+                 2. Trend
+                 3. Momentum
+                 4. Dow's Theory check
+                 5. R/R"""
 
-if __name__ == "__main__":
-    A = TechModel()
-    # A.analyse('TITAN')
-    A.analyse('TITAN', from_live=False)
+        self.add('INFO', "Fetching stats from analysis.")
+        return {'pitchfork': change_time_of_pitchfork(self.other_data['pitchfork']),
+                'trend': self.other_data['trend'],
+                'dow_check': self.other_data['dow_check'],
+                'rr': {'rr_rating': self.rr_rating,
+                       'rr_ration': self.rr_ratio}}
+
+
+# if __name__ == "__main__":
+#     A = TechModel()
+#     # A.analyse('TITAN')
+#     print(A.analyse('PRESTIGE', from_live=True, in_json=True))

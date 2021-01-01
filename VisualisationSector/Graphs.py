@@ -51,20 +51,17 @@ class VisualAnalysis(Logger):
         if tools is not None:
             self.__TOOLS = tools
 
-    def __to_col_data_source(self, data):
+    @staticmethod
+    def __to_col_data_source(data):
         stock_data = ColumnDataSource(data=dict(date=[], open=[], close=[], high=[], low=[], MFI=[], MACD_Hist=[],
                                                 MACD=[], MACD_Signal=[], ADX=[], index=[]))
         data['date'] = pd.to_datetime(data['time'], format='%Y-%m-%d')
         stock_data.data = stock_data.from_df(data)
-        try:
-            self.add("INFO", "ColumnDataSource created for {}".format(data['symbol'].values[0]))
-        except KeyError:
-            self.add("INFO", "For the min_max pointers.")
+
         return stock_data
 
-    "Candle stick representation of the stock."
-
     def get_candlestick(self, data, show_graph=True, p=None):
+        """Candle stick representation of the stock."""
         stock_data = self.__to_col_data_source(data)
         title = "{} Data ({}, Code:{})".format(stock_data.data['security_name'][0],
                                                stock_data.data['symbol'][0], stock_data.data['code'][0])
@@ -106,9 +103,8 @@ class VisualAnalysis(Logger):
 
         return p
 
-    "Close price/ MFI/ ADX in line format"
-
     def get_trend_line(self, data, col_name, show_graph=True, p=None):
+        """Close price/ MFI/ ADX in line format"""
         stock_data = self.__to_col_data_source(data)
         max_min_data = self.__to_col_data_source(get_max_min_points(data, 'close'))
         title = "{} Data ({}, Code:{})".format(stock_data.data['security_name'][0],
@@ -150,9 +146,8 @@ class VisualAnalysis(Logger):
 
         return p
 
-    """MACD indicator plot."""
-
     def get_macd_plot(self, data, show_graph=False, p=None):
+        """MACD indicator plot."""
         stock_data = self.__to_col_data_source(data)
 
         title = "{} Data ({}, Code:{})".format(stock_data.data['security_name'][0],
@@ -189,9 +184,8 @@ class VisualAnalysis(Logger):
 
         return p
 
-    "Volume traded histogram."
-
     def get_volume_hist(self, data, show_graph=False, p=None):
+        """Volume traded histogram."""
         stock_data = self.__to_col_data_source(data)
         title = "{} Data ({}, Code:{})".format(stock_data.data['security_name'][0],
                                                stock_data.data['symbol'][0], stock_data.data['code'][0])
@@ -259,9 +253,8 @@ class VisualAnalysis(Logger):
         show(tabs)
         self.add("INFO", "TABS VIEW ON.")
 
-    """Other util plots"""
-
     def get_line(self, point_a, point_b, p=None, colour='gray', show_graph=False):
+        """Other util plots"""
         title = 'UTIL_PLOT'
 
         if p is None:

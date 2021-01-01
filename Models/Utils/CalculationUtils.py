@@ -1,4 +1,8 @@
 """Model analysis utils."""
+import datetime
+import glob
+import pathlib
+
 from bokeh.io import show
 import pandas as pd
 import numpy as np
@@ -9,6 +13,7 @@ from LoggerApi.Logger import Logger
 from VisualisationSector.Graphs import VisualAnalysis
 
 LOGGER = Logger(__file__, 'CALCULATION_LOG')
+BASE_PATH = pathlib.Path(__file__).parent.parent.parent
 
 
 class RiskRewardForStock:
@@ -223,7 +228,7 @@ def transcend_pitchfork(data):
         return None
     max_touches = 0
     revise_touches = 0
-    optimum_pitchfork = None
+    op_points = []
     op_plot = None
     for p_2 in range(1, analysis_data.shape[0] - 1):
         for p_3 in range(p_2):
@@ -251,11 +256,18 @@ def transcend_pitchfork(data):
                         continue
                     max_touches = return_goods[0]
                     revise_touches = return_goods[1]
-                    optimum_pitchfork = pitch_fork_model
-                    op_plot = optimum_pitchfork.get_plot(return_goods[2], return_goods[3])
+                    op_points = [p_1, p_2, p_3]
+                    op_plot = pitch_fork_model.get_plot(return_goods[2], return_goods[3])
                     LOGGER.add("INFO", 'Pitchfork points are updated. MID_VALIDATION: {}.'
                                        ' REVISION_VALIDATION: {}'.
                                format(max_touches, revise_touches))
+    optimum_pitchfork = PitchFork([np.datetime64(analysis_data_time[op_points[0]]),
+                                   np.datetime64(analysis_data_time[op_points[1]]),
+                                   np.datetime64(analysis_data_time[op_points[2]])],
+                                  [analysis_data_close[op_points[0]],
+                                   analysis_data_close[op_points[1]],
+                                   analysis_data_close[op_points[2]]],
+                                  mode='ModSchiff')
     return optimum_pitchfork, op_plot
 
 
@@ -310,25 +322,23 @@ def get_momentum_from_macd(stock_data):
         for index, value in enumerate(macd):
             if index < 2:
                 continue
-            if value > macd[index - 1] < macd[index -2]:
+            if value > macd[index - 1] < macd[index - 2]:
                 slope = "PULLING_TO_BULL"
                 return slope, Constants.BEAR
             if value > 0:
                 return slope, Constants.BEAR
 
 
-# if __name__ == '__main__':
-#     A = FetchHistFromES('D', 365)
-#     B = A.get_stock_data("TITAN", False)
-#     print(get_trend_of_stock(B.head(25*Constants.MONTH_OF_TEST)))
-#     print(get_momentum_from_macd(B.head(25*Constants.MONTH_OF_TEST)))
-    # show(plot_y)
-    # print(C.get_all())
-# max_min_points = get_max_min_points(B, 'close')
-# p_x = max_min_points['time'].values
-# p_y = max_min_points['close'].values
-# model = PitchFork([p_x[0], p_x[4], p_x[7]], [p_y[0], p_y[4], p_y[7]])
-# details = model.get_all()
-# print(details)
-# print(model.get_y_for_all_lines(point_x[-1:][0]))
-# model.get_plot(show_graph=True)
+def get_dow_check_correlation(annual_data=None):
+    """Check the correlation of the stock with the NIFTY50."""
+    if annual_data is None:
+        return None
+    file_path = glob.glob(str(BASE_PATH) + "/Harvester/resources/NIFTY*")
+    get_nifty = pd.read_csv(file_path[0])
+    get_nifty = get_nifty[['Date', 'Close']]
+    timestamp = [datetime.datetime.strptime(date, '%d-%b-%Y').strftime('%Y-%m-%d')
+                 for date in get_nifty['Date'].values]
+    get_nifty['time'] = pd.to_datetime(timestamp)
+    get_nifty.drop('Date', axis=1)
+    get_nifty = pd.merge(get_nifty, annual_data, on='time', how='inner')
+    return get_nifty['Close'].corr(get_nifty['adjusted_close'])

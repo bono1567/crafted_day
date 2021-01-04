@@ -1,5 +1,6 @@
 import aiohttp_jinja2
 from aiohttp import web
+from elasticsearch import TransportError
 
 
 async def handle_404(request):
@@ -24,7 +25,7 @@ def create_error_middleware(overrides):
             raise
         except web.HTTPInternalServerError or TypeError:
             return await overrides[500](request)
-        except IndexError:
+        except IndexError or TransportError:
             return await overrides[404](request)
 
     return error_middleware

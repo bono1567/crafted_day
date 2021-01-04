@@ -1,3 +1,4 @@
+nsetools
 jinja2
 PyYAML
 numpy

@@ -6,7 +6,7 @@ from pandas.errors import EmptyDataError
 from Harvester.StockPriceHarvester.NSEToolsHarvester.FetchData import FetchNSEData
 
 
-class MyTestCase(unittest.TestCase):
+class TestFetchNSEData(unittest.TestCase):
     """Unit test case for NSE harvester."""
     model = FetchNSEData()
 

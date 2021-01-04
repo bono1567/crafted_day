@@ -7,7 +7,7 @@ import pandas as pd
 from Harvester.HeadlineHarvester.Weaver import DataWeaver
 
 
-class HeadLineHarvesterTest(unittest.TestCase):
+class TestHeadLineHarvester(unittest.TestCase):
     """Unit test for Headline Harvester from FT times."""
 
     @patch('Harvester.HeadlineHarvester.DataRetriever.FinancialTimes.get_final_components')

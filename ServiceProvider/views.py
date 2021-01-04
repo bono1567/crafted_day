@@ -1,8 +1,14 @@
 """Project view for crafted day."""
 import glob
+import json
+
 import aiohttp_jinja2
 from aiohttp import web
 from datetime import datetime
+
+from Harvester.HeadlineHarvester.DataArrangement import FTArrangeWithWords
+from Harvester.StockPriceHarvester.DataArrangement import FetchHistFromES
+from Harvester.StockPriceHarvester.NSEToolsHarvester.StockFromExistingData import FetchAllData
 from LoggerApi.Logger import Logger
 from Models.HistoricalModel import TechModel
 from ServiceProvider.settings import BASE_DIR
@@ -50,7 +56,13 @@ async def analyse_and_forward(request: web.Request):
 
 async def get_news(request: web.Request):
     """Get news data for keywords."""
-    return None
+    request_data = await request.json()
+    ft_model = FTArrangeWithWords(request_data['words'])
+    ft_data = ft_model.get_summary(True).to_dict(orient='index')
+    ft_data = json.dumps(ft_data)
+    LOGGER.add('INFO', 'Converted to JSON news for words.')
+    return web.json_response(body=ft_data,
+                             content_type='application/json')
 
 
 async def get_feeder_data(request: web.Request):
@@ -60,13 +72,28 @@ async def get_feeder_data(request: web.Request):
 
 async def get_back_testing_data(request: web.Request):
     """To back-test the RL model."""
-    return None
+    code = request.match_info['symbol']
+    fetch_model = FetchAllData()
+    result = fetch_model.fetch_stock_data(code, in_pandas=False)
+    LOGGER.add('INFO', "Successful in fetching data")
+    result = json.dumps(result['hits'])
+    LOGGER.add('INFO', "JSON conversion. {}".format(code))
+    return web.json_response(body=result,
+                             content_type='application/json')
 
 
 async def get_train_data(request: web.Request):
     """In case train data is required fetch it for the given stock."""
-    return None
-
-
-
+    request_data = await request.json()
+    es_model = FetchHistFromES(request_data['interval'],
+                               request_data['timePeriod'])
+    return_data = es_model.get_stock_data(request_data['symbol'],
+                                          from_live=request_data['latest'])
+    return_data['time'] = return_data['time'].dt.strftime('%Y-%m-%d')
+    return_data = return_data.to_dict(orient='index')
+    LOGGER.add('INFO', "Successful in fetching train data.")
+    return_data = json.dumps(return_data)
+    LOGGER.add('INFO', "Converted train data to JSON.")
+    return web.json_response(body=return_data,
+                             content_type='application/json')
 

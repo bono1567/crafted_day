@@ -5,19 +5,27 @@ import numpy as np
 import Constants
 from Harvester.StockPriceHarvester.DataArrangement import FetchHistFromES
 from LoggerApi.Logger import Logger
-from Models.Utils.CalculationUtils import RiskRewardForStock, transcend_pitchfork, get_trend_of_stock, \
-    get_momentum_from_macd, get_dow_check_correlation
+from Models.Utils.CalculationUtils import RiskRewardForStock, transcend_pitchfork, \
+    get_trend_of_stock, get_momentum_from_macd, get_dow_check_correlation
 from VisualisationSector.Graphs import VisualAnalysis
 
 
 def change_time_of_pitchfork(pitchfork_data):
-    pitchfork_data['mid_23']['x'] = np.datetime_as_string(pitchfork_data['mid_23']['x'], timezone='local')
-    pitchfork_data['mid_12']['x'] = np.datetime_as_string(pitchfork_data['mid_12']['x'], timezone='local')
-    pitchfork_data['m1']['x'] = np.datetime_as_string(pitchfork_data['m1']['x'], timezone='local')
-    pitchfork_data['m2']['x'] = np.datetime_as_string(pitchfork_data['m2']['x'], timezone='local')
-    pitchfork_data['point_1']['x'] = np.datetime_as_string(pitchfork_data['point_1']['x'], timezone='local')
-    pitchfork_data['point_2']['x'] = np.datetime_as_string(pitchfork_data['point_2']['x'], timezone='local')
-    pitchfork_data['point_3']['x'] = np.datetime_as_string(pitchfork_data['point_3']['x'], timezone='local')
+    """Time zone changer"""
+    pitchfork_data['mid_23']['x'] = np.datetime_as_string(
+        pitchfork_data['mid_23']['x'], timezone='local')
+    pitchfork_data['mid_12']['x'] = np.datetime_as_string(
+        pitchfork_data['mid_12']['x'], timezone='local')
+    pitchfork_data['m1']['x'] = np.datetime_as_string(
+        pitchfork_data['m1']['x'], timezone='local')
+    pitchfork_data['m2']['x'] = np.datetime_as_string(
+        pitchfork_data['m2']['x'], timezone='local')
+    pitchfork_data['point_1']['x'] = np.datetime_as_string(
+        pitchfork_data['point_1']['x'], timezone='local')
+    pitchfork_data['point_2']['x'] = np.datetime_as_string(
+        pitchfork_data['point_2']['x'], timezone='local')
+    pitchfork_data['point_3']['x'] = np.datetime_as_string(
+        pitchfork_data['point_3']['x'], timezone='local')
     pitchfork_data['convention'] = "True" if pitchfork_data['convention'] else "False"
     return pitchfork_data
 
@@ -25,48 +33,47 @@ def change_time_of_pitchfork(pitchfork_data):
 class TechModel(Logger):
     """The state creator class and
     other analysis model calculation done in this class."""
-    INTERVAL = 'D'
-    TIME_PERIOD = 365
-    p_items = {}
-    other_data = {}
-    rr_rating, rr_ratio = (0, 0)
 
     def __init__(self):
+        self.interval = 'D'
+        self.time_period = 365
+        self.p_items = {}
+        self.other_data = {}
+        self.rr_rating, self.rr_ratio = (0, 0)
         super().__init__(TechModel.__name__, 'TECH_LOG')
-        self.es_model = FetchHistFromES(self.INTERVAL, self.TIME_PERIOD)
-        self.rr_model = RiskRewardForStock()
-        self.graph_model = VisualAnalysis()
+        self.es_model = FetchHistFromES(self.interval, self.time_period)
 
     def analyse(self, stock_indicator, from_live=False, in_json=False):
         """The analyse a stock function."""
+        graph_model = VisualAnalysis()
         annual_data = self.__get_stock_data(stock_indicator, from_live)
 
-        self.p_items['price'] = self.graph_model.get_trend_line(
+        self.p_items['price'] = graph_model.get_trend_line(
             annual_data, col_name='close', show_graph=False)
-        self.p_items['cd_stick'] = self.graph_model.get_candlestick(
+        self.p_items['cd_stick'] = graph_model.get_candlestick(
             annual_data, show_graph=False)
-        self.p_items['volume'] = self.graph_model.get_volume_hist(
+        self.p_items['volume'] = graph_model.get_volume_hist(
             annual_data, show_graph=False)
         if 'MACD' in annual_data.columns:
             self.add("INFO", "MACD Data exists.")
-            self.p_items['MACD'] = self.graph_model.get_macd_plot(
+            self.p_items['MACD'] = graph_model.get_macd_plot(
                 annual_data, show_graph=False)
         if 'MFI' in annual_data.columns:
             self.add("INFO", "MFI Data exists.")
-            self.p_items['MFI'] = self.graph_model.get_trend_line(
+            self.p_items['MFI'] = graph_model.get_trend_line(
                 annual_data, col_name='MFI', show_graph=False)
         if 'ADX' in annual_data.columns:
             self.add("INFO", "MFI Data exists.")
-            self.p_items['ADX'] = self.graph_model.get_trend_line(
+            self.p_items['ADX'] = graph_model.get_trend_line(
                 annual_data, col_name='ADX', show_graph=False)
 
         # Automate the selection of the pitch-fork points.
         pitchfork, pf_plot = transcend_pitchfork(annual_data)
-        self.p_items['PITCH_FORK'] = self.graph_model.get_trend_line(
+        self.p_items['PITCH_FORK'] = graph_model.get_trend_line(
             annual_data, col_name='close', show_graph=False, p=pf_plot)
-        self.p_items['price'] = self.graph_model.get_trend_line(
+        self.p_items['price'] = graph_model.get_trend_line(
             annual_data, col_name='close', show_graph=False)
-        self.graph_model.show_all(self.p_items, stock_indicator)
+        graph_model.show_all(self.p_items, stock_indicator)
 
         # Trend check
         self.other_data['trend'] = get_trend_of_stock(
@@ -96,9 +103,10 @@ class TechModel(Logger):
 
     def __set_risk_reward(self, closed_value, expected_book_price, stop_loss_amount):
         """Set the risk reward for a particular stock."""
-        self.rr_rating = self.rr_model.get_rating(
+        rr_model = RiskRewardForStock()
+        self.rr_rating = rr_model.get_rating(
             closed_value, expected_book_price, stop_loss_amount)
-        self.rr_ratio = self.rr_model.ratio
+        self.rr_ratio = rr_model.ratio
         self.add("INFO", "R/R calculated: {:.4f} (Date of calculation: {})".format(
             self.rr_ratio, closed_value))
 

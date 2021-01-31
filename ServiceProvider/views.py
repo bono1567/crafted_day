@@ -1,10 +1,10 @@
 """Project view for crafted day."""
 import glob
 import json
+from datetime import datetime
 
 import aiohttp_jinja2
 from aiohttp import web
-from datetime import datetime
 
 from Harvester.HeadlineHarvester.DataArrangement import FTArrangeWithWords
 from Harvester.StockPriceHarvester.DataArrangement import FetchHistFromES
@@ -29,10 +29,11 @@ async def index(request):
 async def analysis_result_v1(request: web.Request):
     """Returns bokeh analyzed stocks.
     :return HTMl/text"""
-    FILE = glob.glob(str(BASE_DIR) + '/ServiceProvider/templates/' + str(request.match_info['symbol']) + '*')
-    FILE = FILE[0]
+    filer = glob.glob(str(BASE_DIR) + '/ServiceProvider/templates/' + str(
+        request.match_info['symbol']) + '*')
+    filer = filer[0]
     payload = ""
-    with open(FILE) as file:
+    with open(filer) as file:
         for line in file.readlines():
             if "<title>" in line:
                 line = line[0:13] + request.match_info['symbol'] + "</title>\n"
@@ -58,16 +59,16 @@ async def get_news(request: web.Request):
     """Get news data for keywords."""
     request_data = await request.json()
     ft_model = FTArrangeWithWords(request_data['words'])
-    ft_data = ft_model.get_summary(True).to_dict(orient='index')
+    ft_data = ft_model.get_summary().to_dict(orient='index')
     ft_data = json.dumps(ft_data)
     LOGGER.add('INFO', 'Converted to JSON news for words.')
     return web.json_response(body=ft_data,
                              content_type='application/json')
 
 
-async def get_feeder_data(request: web.Request):
-    """Fetch the data from ES or AlphaVantage APIs."""
-    return None
+# async def get_feeder_data(request: web.Request):
+#     """Fetch the data from ES or AlphaVantage APIs."""
+#     return None
 
 
 async def get_back_testing_data(request: web.Request):
@@ -96,4 +97,3 @@ async def get_train_data(request: web.Request):
     LOGGER.add('INFO', "Converted train data to JSON.")
     return web.json_response(body=return_data,
                              content_type='application/json')
-

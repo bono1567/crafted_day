@@ -9,6 +9,7 @@ import Constants
 
 
 def convert_to_same(timestamp):
+    """Time stamp converter."""
     timestamp = timestamp[:1] + '/' + timestamp[1:3] + '/' + timestamp[-4:]
     return datetime.strptime(timestamp, '%d/%m/%Y')
 
@@ -101,7 +102,7 @@ def get_max_min_points(data, column_name):
     return data[['time', column_name]][data['time'].isin(max_min_index)]
 
 
-# if __name__ == '__main__':
-#     LOGGER = Logger(__file__, "WEEKLY_GATHERING")
-#     weekly_report_to_json()
-#     insert_to_es_index(logger=LOGGER)
+if __name__ == '__main__':
+    from LoggerApi.Logger import Logger
+    LOGGER = Logger('MANUAL_INSERT_LOG')
+    insert_to_es_index(LOGGER)

@@ -4,8 +4,10 @@ import requests
 import pandas as pd
 from LoggerApi.Logger import Logger
 
+LOGGER = Logger(__file__)
 
-class FinancialTimes(Logger):
+
+class FinancialTimes:
     """FT Times Headline API aggregator."""
     __url = "http://api.ft.com/content/search/v1"
     __qstr = {"apiKey": "59cbaf20e3e06d3565778e7b14cce0b217a844419dcc5bb1cc3ad4e9"}
@@ -18,7 +20,6 @@ class FinancialTimes(Logger):
     }
 
     def __init__(self, query, title=False):
-        super().__init__(FinancialTimes.__name__)
         self.__title = title
         if title:
             self.__payload = '{"queryString": "' + query + \
@@ -26,7 +27,7 @@ class FinancialTimes(Logger):
         else:
             self.__payload = '{"queryString": "' + query + \
                              '","resultContext" : {"aspects" :[ "summary","lifecycle"]}}'
-        self.add('INFO', "Final FT news data for keyword: {}".format(query))
+        LOGGER.add('INFO', "Final FT news data for keyword: {}".format(query))
 
     def response_json(self):
         """Get the JSON response from the URL"""
@@ -50,22 +51,22 @@ class FinancialTimes(Logger):
                     components_dict['title'] = result['title']['title']
                 final_result.append(components_dict)
             except KeyError as exp:
-                self.add('ERROR', "Key Missing in result. {}".format(exp))
-        self.add('INFO', "Final FT get_final_components.")
+                LOGGER.add('ERROR', "Key Missing in result. {}".format(exp))
+        LOGGER.add('INFO', "Final FT get_final_components.")
         return final_result
 
 
 class FTArrangement(FinancialTimes):
     """Mainly for converting the JSON response to pandas DataFrame."""
+
     def __init__(self, comp_name="stocks"):
-        super().__init__(FTArrangement.__name__)
         super().__init__(comp_name, True)
         self.__data = self.get_final_components()
 
     def get_summary_date_api(self, title=False):
         """:return pandas df with summary, title and other components"""
-        self.add('INFO', "SUMMARY/DATE/API called."
-                         " With title as {}.".format(title))
+        LOGGER.add('INFO', "SUMMARY/DATE/API called."
+                           " With title as {}.".format(title))
         data = pd.DataFrame(data=self.__data,
                             columns=['aspectSet', 'apiUrl', 'publishDate', 'summary', 'title'])
         if title is False:
@@ -76,7 +77,7 @@ class FTArrangement(FinancialTimes):
         """:returns List with summary and title which are comma seperated."""
         all_summary = []
         all_title = []
-        self.add('INFO', "SUMMARY/DATE/API/W2V called. With title as {}.".format(title))
+        LOGGER.add('INFO', "SUMMARY/DATE/API/W2V called. With title as {}.".format(title))
         for data_point in self.__data:
             sentence = data_point['summary']
             all_summary.append(sentence)
@@ -87,7 +88,6 @@ class FTArrangement(FinancialTimes):
             del all_title
             return all_summary
         return [all_summary, all_title]
-
 
 # if __name__ == "__main__":
 #         A = FTArrangement('John')

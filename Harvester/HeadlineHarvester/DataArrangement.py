@@ -3,12 +3,13 @@ import pandas as pd
 from Harvester.HeadlineHarvester.DataRetriever import FTArrangement
 from LoggerApi.Logger import Logger
 
+LOGGER = Logger(__file__)
 
-class FTArrangeWithWords(Logger):
+
+class FTArrangeWithWords:
     """FT data arrangement class."""
 
     def __init__(self, words_for_search):
-        super().__init__(FTArrangeWithWords.__name__)
         self.__words = words_for_search
         self.__summary = []
         self.__titles = []
@@ -27,7 +28,7 @@ class FTArrangeWithWords(Logger):
             self.__titles.extend(extraction_with_title)
             self.__date.extend(extraction_with_summary_time['publishDate'].values.tolist())
             self.__total_data.extend(extraction_with_summary_time)
-            self.add('INFO', 'Fetching SUMMARY_COMPLETE for {}'.format(word))
+            LOGGER.add('INFO', 'Fetching SUMMARY_COMPLETE for {}'.format(word))
         data = pd.DataFrame()
         data['time'] = self.__date
         data['summary'] = self.__summary

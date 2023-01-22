@@ -72,3 +72,8 @@ STAGNANT = "STAGNANT"
 # Momentum constants
 BULL = "BULLISH"
 BEAR = "BEARISH"
+SEPARATOR = "++++"
+
+# NewsHarvestor
+API_MARK = "XxKZHqYQ4sgLHOUhRAohXEyUtRgR88IofJOtVHT1"
+API_FT = "59cbaf20e3e06d3565778e7b14cce0b217a844419dcc5bb1cc3ad4e9"

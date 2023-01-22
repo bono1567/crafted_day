@@ -1,6 +1,6 @@
 """Financial Times conversion to acceptable format."""
 import pandas as pd
-from Harvester.HeadlineHarvester.DataRetriever import FTArrangement
+from Harvester.HeadlineHarvester.DataRetriever import DataArrangement
 from LoggerApi.Logger import Logger
 
 LOGGER = Logger(__file__)
@@ -20,7 +20,7 @@ class FTArrangeWithWords:
         """Get the summary for the input words_for_search."""
 
         for word in self.__words:
-            extraction_model = FTArrangement(word)
+            extraction_model = DataArrangement(word)
             extraction_with_summary_time = extraction_model.get_summary_date_api(True)
             extraction_with_summary, extraction_with_title =\
                 extraction_model.get_summary_for_w2v(True)

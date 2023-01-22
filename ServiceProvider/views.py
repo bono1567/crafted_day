@@ -2,6 +2,7 @@
 import glob
 import json
 from datetime import datetime
+from html import escape
 
 import aiohttp_jinja2
 from aiohttp import web
@@ -40,7 +41,7 @@ async def analysis_result_v1(request: web.Request):
                 line = line[0:13] + request.match_info['symbol'] + "</title>\n"
             payload += line
     LOGGER.add('INFO', 'Graph HTML sent.')
-    return web.Response(text=payload, content_type='text/html')
+    return web.Response(text=escape(payload), content_type='text/html')
 
 
 async def analyse_and_forward(request: web.Request):

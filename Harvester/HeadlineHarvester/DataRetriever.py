@@ -1,10 +1,66 @@
 """FT Times headlines aggregator. """
 
+import datetime
+
+import dateutil.relativedelta
 import requests
 import pandas as pd
-
-from Constants import SEPARATOR, API_MARK, API_FT
+from GoogleNews import GoogleNews
+from Constants import SEPARATOR, API_MARK, API_FT, MONTHS
 from LoggerApi.Logger import Logger
+
+
+def get_date(date):
+    """Convert date to datetime"""
+    day = int(date.split()[0])
+    month = MONTHS[date.split()[1].lower()]
+    current_time = datetime.datetime.now()
+    year = int(current_time.year)
+    final_date = datetime.date(year, month, day)
+    if final_date >= datetime.datetime.now().date():
+        final_date = final_date - dateutil.relativedelta.relativedelta(years=1)
+    return final_date
+
+
+class GoogleNewsApi(Logger):
+    """Market news from Google"""
+    __gn = GoogleNews(lang='en')
+
+    def __init__(self, stock, period=None):
+        super().__init__(GoogleNewsApi.__name__)
+        if period is not None:
+            self.__gn.set_period("{}d".format(period))
+        self.__keyword = stock
+        self.__gn.get_news(stock)
+
+    def get_result(self):
+        """Get refined result with datetime."""
+        result = self.__gn.results()
+        final_answer = []
+        for headline in result:
+            val_head = {}
+            if headline["datetime"] is not None:
+                val_head["publishDate"] = headline["datetime"]
+            else:
+                val_head["publishDate"] = get_date(headline["date"])
+            val_head['title'] = headline['title']
+            val_head['apiUrl'] = headline['link']
+            val_head['summary'] = headline['title']
+            final_answer.append(val_head)
+        return final_answer
+
+    def get_final_components(self):
+        """:return list of dict with different keys from the API response."""
+        results = self.get_result()
+        final_result = []
+        for result in results:
+            try:
+                result['summary'] = result['summary'].replace("<em>", "").replace("</em>", "")
+                final_result.append(result)
+            except KeyError as exp:
+                self.add('ERROR', "Key Missing in result. {}".format(exp))
+        self.add('INFO', "Final Google Headlines get_final_components. Note: Headlines only, no summary.")
+        return final_result
 
 
 class MarketAux(Logger):
@@ -150,11 +206,13 @@ class DataArrangement(Logger):
         return [all_summary, all_title]
 
 
-# if __name__ == "__main__":
-#     params = {"symbols": "AAPL"}
-#     A = MarketAux(params)
-#     C = DataArrangement(A)
-#     final_c = C.get_summary_date_api()
-#     print(final_c)
+if __name__ == "__main__":
+    params = {"symbols": "AAPL"}
+    G = GoogleNewsApi('AAPL')
+    S = G.get_final_components()
+
+    C = DataArrangement(G)
+    final_c = C.get_summary_date_api()
+    print(final_c)
 
 

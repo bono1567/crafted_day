@@ -2,13 +2,74 @@
 
 import requests
 import pandas as pd
+
+from Constants import SEPARATOR, API_MARK, API_FT
 from LoggerApi.Logger import Logger
+
+
+class MarketAux(Logger):
+    """Market AUX Data Aggregator"""
+    __url = "https://api.marketaux.com/v1/news/all"
+    __qstr = {"api_token": API_MARK}
+
+    def __init__(self, parameters, limit=100):
+        super().__init__(MarketAux.__name__)
+        self.__qstr.update({"limit": str(limit)})
+        self.__qstr.update(parameters)
+
+    def response_json(self):
+        """Get the API response"""
+        return requests.request("GET", self.__url, params=self.__qstr).json()
+
+    def get_result(self):
+        """Return the result in the expected format"""
+        self.add("INFO", "Data retrieval")
+        data = self.response_json()
+        data = data["data"]
+        final_data = []
+        for headline in data:
+            entities = self.__get_entities(headline["entities"])
+            final_headline = {"title": headline["title"],
+                              "publishDate": headline["published_at"],
+                              "summary": entities["summary"],
+                              "sentiment": entities["sentiment"],
+                              "apiUrl": headline["url"]}
+            final_data.append(final_headline)
+        return final_data
+
+    def get_final_components(self):
+        """:return list of dict with different keys from the API response."""
+        results = self.get_result()
+        final_result = []
+        for result in results:
+            try:
+                result['summary'] = result['summary'].replace("<em>", "").replace("</em>", "")
+                final_result.append(result)
+            except KeyError as exp:
+                self.add('ERROR', "Key Missing in result. {}".format(exp))
+        self.add('INFO', "Final Mark AUX get_final_components.")
+        return final_result
+
+    def __get_entities(self, entities):
+        """:return Summary of highlight entities."""
+        result = {}
+        highlights = ""
+        sentiments = ""
+        for ent in entities:
+            if ent['symbol'] in self.__qstr['symbols']:
+                for highlight in ent['highlights']:
+                    highlights += highlight["highlight"]
+                    highlights += SEPARATOR
+            sentiments += str(ent["sentiment_score"]) + SEPARATOR
+        result['summary'] = highlights
+        result['sentiment'] = sentiments
+        return result
 
 
 class FinancialTimes(Logger):
     """FT Times Headline API aggregator."""
     __url = "http://api.ft.com/content/search/v1"
-    __qstr = {"apiKey": "59cbaf20e3e06d3565778e7b14cce0b217a844419dcc5bb1cc3ad4e9"}
+    __qstr = {"apiKey": API_FT}
     __payload = '{"queryString": "{}","resultContext" : {"aspects" :[ "summary","lifecycle"{}]}}'
     __headers = {
         'X-Api-Key': "59cbaf20e3e06d3565778e7b14cce0b217a844419dcc5bb1cc3ad4e9",
@@ -43,7 +104,7 @@ class FinancialTimes(Logger):
         final_result = []
         for result in results:
             try:
-                components_dict = {'aspectSet': result['aspectSet'], 'apiUrl': result['apiUrl'],
+                components_dict = {'apiUrl': result['apiUrl'],
                                    'publishDate': result['lifecycle']['lastPublishDateTime'][:10],
                                    'summary': result['summary']['excerpt']}
                 if self.__title:
@@ -55,22 +116,22 @@ class FinancialTimes(Logger):
         return final_result
 
 
-class FTArrangement(FinancialTimes):
+class DataArrangement(Logger):
     """Mainly for converting the JSON response to pandas DataFrame."""
-    def __init__(self, comp_name="stocks"):
-        super().__init__(FTArrangement.__name__)
-        super().__init__(comp_name, True)
-        self.__data = self.get_final_components()
 
-    def get_summary_date_api(self, title=False):
+    def __init__(self, source):
+        super().__init__(DataArrangement.__name__)
+        self.__data = source.get_final_components()
+
+    def get_summary_date_api(self, parameters=None, title=True):
         """:return pandas df with summary, title and other components"""
         self.add('INFO', "SUMMARY/DATE/API called."
                          " With title as {}.".format(title))
         data = pd.DataFrame(data=self.__data,
-                            columns=['aspectSet', 'apiUrl', 'publishDate', 'summary', 'title'])
+                            columns=['apiUrl', 'publishDate', 'summary', 'title', 'sentiment'])
         if title is False:
-            return data.drop(['aspectSet', 'title'], axis=1)
-        return data.drop('aspectSet', axis=1)
+            return data.drop(['title'], axis=1)
+        return data
 
     def get_summary_for_w2v(self, title=False):
         """:returns List with summary and title which are comma seperated."""
@@ -90,8 +151,10 @@ class FTArrangement(FinancialTimes):
 
 
 # if __name__ == "__main__":
-#         A = FTArrangement('John')
-#         data = A.get_summary_date_api(True)
-#
-#         C = FTArrangement('Morgan')
-#         C.get_summary_date_api()
+#     params = {"symbols": "AAPL"}
+#     A = MarketAux(params)
+#     C = DataArrangement(A)
+#     final_c = C.get_summary_date_api()
+#     print(final_c)
+
+

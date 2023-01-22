@@ -12,6 +12,7 @@ from Harvester.StockPriceHarvester.NSEToolsHarvester.StockFromExistingData impor
 from LoggerApi.Logger import Logger
 from Models.HistoricalModel import TechModel
 from ServiceProvider.settings import BASE_DIR
+from ServiceProvider.utils import get_nifty_history
 
 LOGGER = Logger(filename=__file__, log_name='REQUEST_LOGS')
 
@@ -96,4 +97,12 @@ async def get_train_data(request: web.Request):
     return_data = json.dumps(return_data)
     LOGGER.add('INFO', "Converted train data to JSON.")
     return web.json_response(body=return_data,
+                             content_type='application/json')
+
+
+async def get_nifty_data(request: web.Request):
+    """Get the NIFTY last one year data, mainly used for news predictor."""
+    request_data = await request.json()
+    LOGGER.add('INFO', 'NIFTY Yearly Data sent. Request: {}'.format(request_data))
+    return web.json_response(body=get_nifty_history(),
                              content_type='application/json')

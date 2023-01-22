@@ -125,7 +125,6 @@ class TechModel(Logger):
                 'rr': {'rr_rating': self.rr_rating,
                        'rr_ration': self.rr_ratio}}
 
-
 # if __name__ == "__main__":
 #     A = TechModel()
 #     # A.analyse('TITAN')
